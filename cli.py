@@ -47,12 +47,12 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.tree import Tree
 
-from auditsure_pipeline import generate_explanation
-from business_profile import BusinessProfile, RegistrationStatus
-from layer3_explainer import Layer3Explainer
-from ontology_loader import OntologyLoader, get_default_loader
-from profile_loader import ProfileLoadError, load_profile_from_json
-from proof_object import ProofObject, VerdictStatus
+from app.auditsure_pipeline import generate_explanation
+from app.models.business_profile import BusinessProfile, RegistrationStatus
+from app.llm.layer3_explainer import Layer3Explainer
+from app.ontology.ontology_loader import OntologyLoader, get_default_loader
+from app.io.profile_loader import ProfileLoadError, load_profile_from_json
+from app.models.proof_object import ProofObject, VerdictStatus
 
 EXAMPLES_DIR = Path(__file__).parent / "examples"
 
