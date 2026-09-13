@@ -1,0 +1,10 @@
+{
+  "name": "Manipur Handloom Exports",
+  "state": "Manipur",
+  "aggregate_turnover": "1200000",
+  "financial_year": "2025-26",
+  "business_types": ["Manufacturer"],
+  "opts_for_composition": true,
+  "makes_interstate_outward_supply": true,
+  "registration_status": "NotRegistered"
+}

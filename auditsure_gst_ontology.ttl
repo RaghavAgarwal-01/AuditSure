@@ -1,0 +1,2023 @@
+@prefix :     <http://www.auditsure.in/ontology/gst#> .
+@prefix gst:  <http://www.auditsure.in/ontology/gst#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix dct:  <http://purl.org/dc/terms/> .
+
+#################################################################
+#  AuditSure GST Legal Knowledge Ontology
+#  ---------------------------------------------------------------
+#  Layer 1 of the AuditSure Neuro-Symbolic Compliance Architecture
+#  (Layer 2 = Z3 Solver, Layer 3 = LLM explanation generator)
+#
+#  Scope   : Central Goods and Services Tax Act 2017 & Rules 2017,
+#            Integrated Goods and Services Tax Act 2017 & Rules 2017,
+#            GST (Compensation to States) Act 2017 & Rules,
+#            GST Appellate Tribunal Rules 2023 / Procedure Rules 2025.
+#  Source  : "GST Manual" (Sixth Half-Yearly Edition, 01 January 2026),
+#            Adv. (CA) Rakesh Garg & Sandeep Garg, CMA, FCA.
+#            Only the statutory text (Bare Acts / Rules), section
+#            numbers, thresholds, rates, and notification/circular
+#            citations reproduced in that compilation have been used.
+#            No commentary/analysis text from the compilation has been
+#            reproduced; all rdfs:comment annotations are original
+#            paraphrase written for ontology documentation purposes.
+#  Author  : Generated for the "AuditSure" B.Tech capstone project.
+#  Note    : Where the source manual did not enumerate a value
+#            (e.g. current HSN-wise GST rate slabs, full Article 279A
+#            special-category-state list), a placeholder individual /
+#            comment is used instead of an invented value, per project
+#            instructions.
+#
+#  CHANGELOG
+#  ---------
+#  1.1.0 (Phase 2-8 corrections, surfaced by Z3 unit/integration testing):
+#    - Added ThresholdCompositionGoodsSpecialCategory75L (was missing;
+#      Sec 10(1) special-category composition ceiling).
+#    - Renamed ThresholdCompositionGoods150Cr -> ThresholdCompositionGoods1_5Cr
+#      (the old name misleadingly read as "150 Crore" instead of "1.5 Crore").
+#    - Dual-typed Delhi (NCT), Jammu & Kashmir, and Puducherry as both
+#      gst:UnionTerritory and gst:State, per Sec 2(103) CGST Act's explicit
+#      inclusion of a Union Territory with Legislature within "State".
+#    - Added an explicit Sec 10(4) citation to gst:CompositionLevy's ITC/
+#      tax-collection bar (the underlying fact was already in the class
+#      comment; the citation was added for traceability once Phase 8
+#      integration testing surfaced that the Python ITC/e-invoicing engines
+#      were not enforcing it).
+#  1.0.0: initial release (Phase 1).
+#################################################################
+
+<http://www.auditsure.in/ontology/gst> rdf:type owl:Ontology ;
+    owl:versionIRI <http://www.auditsure.in/ontology/gst/1.1.0> ;
+    owl:versionInfo "1.1.0"^^xsd:string ;
+    dct:title "AuditSure GST Legal Knowledge Ontology"@en ;
+    dct:description "Formal OWL 2 representation of Indian GST law (CGST Act/Rules, IGST Act/Rules, GST Compensation Cess Act/Rules) for consumption by a Z3-based symbolic compliance reasoner in the AuditSure system."@en ;
+    dct:source "GST Manual, Sixth Half Yearly Edition, 01 January 2026, by Adv. (CA) Rakesh Garg and Sandeep Garg, CMA, FCA"@en ;
+    dct:created "2026-07-07T00:00:00"^^xsd:dateTime ;
+    rdfs:comment "Do not use for filing or legal advice. Thresholds and rates are as consolidated in the source manual as on 01 January 2026 and are subject to subsequent notifications."@en .
+
+#################################################################
+#  Annotation Properties
+#################################################################
+
+gst:module a owl:AnnotationProperty ;
+    rdfs:comment "Tags a class/property with the ontology module it belongs to (Step 9 modular design)."@en .
+
+gst:legalCitation a owl:AnnotationProperty ;
+    rdfs:comment "Human-readable legal citation (Act, Section, Rule) for an entity, for traceability back to statute."@en .
+
+gst:sourceNote a owl:AnnotationProperty ;
+    rdfs:comment "Notes on provenance / amendment history / placeholder status of a modelled fact."@en .
+
+#################################################################
+#  MODULE 1: CORE
+#  Top-level classes shared across all other modules.
+#################################################################
+
+gst:GSTEntity a owl:Class ;
+    gst:module "Core" ;
+    rdfs:label "GST Entity"@en ;
+    rdfs:comment "Root class for every legally significant entity recognised under Indian GST law (persons, authorities, documents, obligations, legal-reference artefacts)."@en .
+
+### --- Legal Persons (definition 84 of Sec 2, CGST Act) ---
+
+gst:LegalPerson a owl:Class ;
+    rdfs:subClassOf gst:GSTEntity ;
+    gst:module "Core" ;
+    gst:legalCitation "Sec 2(84), CGST Act 2017" ;
+    rdfs:label "Legal Person"@en ;
+    rdfs:comment "A person as defined in Sec 2(84) CGST Act: includes an individual, HUF, company, firm, LLP, AOP/BOI, corporation, foreign body corporate, co-operative society, local authority, Central/State Government, society, trust, or any other artificial juridical person."@en .
+
+gst:Individual a owl:Class ; rdfs:subClassOf gst:LegalPerson ; gst:module "Core" ; rdfs:label "Individual"@en .
+gst:HinduUndividedFamily a owl:Class ; rdfs:subClassOf gst:LegalPerson ; gst:module "Core" ; rdfs:label "Hindu Undivided Family"@en .
+gst:Company a owl:Class ; rdfs:subClassOf gst:LegalPerson ; gst:module "Core" ; rdfs:label "Company"@en .
+gst:Firm a owl:Class ; rdfs:subClassOf gst:LegalPerson ; gst:module "Core" ; rdfs:label "Firm"@en .
+gst:LimitedLiabilityPartnership a owl:Class ; rdfs:subClassOf gst:LegalPerson ; gst:module "Core" ; rdfs:label "Limited Liability Partnership"@en .
+gst:AssociationOfPersons a owl:Class ; rdfs:subClassOf gst:LegalPerson ; gst:module "Core" ; rdfs:label "Association of Persons / Body of Individuals"@en .
+gst:CooperativeSociety a owl:Class ; rdfs:subClassOf gst:LegalPerson ; gst:module "Core" ; rdfs:label "Co-operative Society"@en .
+gst:LocalAuthorityPerson a owl:Class ; rdfs:subClassOf gst:LegalPerson ; gst:module "Core" ; rdfs:label "Local Authority (as person)"@en .
+gst:GovernmentPerson a owl:Class ; rdfs:subClassOf gst:LegalPerson ; gst:module "Core" ; rdfs:label "Central/State Government (as person)"@en .
+gst:SocietyPerson a owl:Class ; rdfs:subClassOf gst:LegalPerson ; gst:module "Core" ; rdfs:label "Society"@en .
+gst:TrustPerson a owl:Class ; rdfs:subClassOf gst:LegalPerson ; gst:module "Core" ; rdfs:label "Trust"@en .
+gst:ArtificialJuridicalPerson a owl:Class ; rdfs:subClassOf gst:LegalPerson ; gst:module "Core" ; rdfs:label "Artificial Juridical Person"@en .
+
+[ a owl:AllDisjointClasses ;
+    owl:members ( gst:Individual gst:HinduUndividedFamily gst:Company gst:Firm
+                  gst:LimitedLiabilityPartnership gst:AssociationOfPersons
+                  gst:CooperativeSociety gst:LocalAuthorityPerson gst:GovernmentPerson
+                  gst:SocietyPerson gst:TrustPerson gst:ArtificialJuridicalPerson )
+] .
+
+### --- Jurisdiction ---
+
+gst:Jurisdiction a owl:Class ; rdfs:subClassOf gst:GSTEntity ; gst:module "Core" ;
+    rdfs:label "Jurisdiction"@en ;
+    rdfs:comment "A geographic/administrative jurisdiction relevant to GST: a State or a Union Territory."@en .
+
+gst:State a owl:Class ; rdfs:subClassOf gst:Jurisdiction ; gst:module "Core" ;
+    gst:legalCitation "Sec 2(103), CGST Act 2017 (State includes a Union territory with Legislature)" ;
+    rdfs:label "State"@en .
+
+gst:UnionTerritory a owl:Class ; rdfs:subClassOf gst:Jurisdiction ; gst:module "Core" ; rdfs:label "Union Territory"@en .
+
+gst:SpecialCategoryState a owl:Class ; rdfs:subClassOf gst:State ; gst:module "Core" ;
+    gst:legalCitation "Explanation to Sec 22(1), CGST Act 2017; Article 279A(4)(g), Constitution of India" ;
+    rdfs:label "Special Category State"@en ;
+    rdfs:comment "For Sec 22 registration-threshold purposes, special category States means the States specified under Article 279A(4)(g) of the Constitution, EXCLUDING Jammu and Kashmir and EXCLUDING Arunachal Pradesh, Assam, Himachal Pradesh, Meghalaya, Sikkim and Uttarakhand (both exclusions inserted by amendment). The full Article 279A(4)(g) base list is a constitutional list not reproduced verbatim in the source manual; only the exclusions are drawn directly from Sec 22 as amended."@en .
+
+### --- Government Authorities ---
+
+gst:GovernmentAuthority a owl:Class ; rdfs:subClassOf gst:GSTEntity ; gst:module "Core" ;
+    rdfs:label "Government Authority"@en ;
+    rdfs:comment "Any authority, officer, board, council or tribunal exercising functions under the CGST/IGST Acts."@en .
+
+gst:ProperOfficer a owl:Class ; rdfs:subClassOf gst:GovernmentAuthority ; gst:module "Core" ;
+    gst:legalCitation "Sec 2(91), CGST Act 2017" ; rdfs:label "Proper Officer"@en .
+gst:Commissioner a owl:Class ; rdfs:subClassOf gst:GovernmentAuthority ; gst:module "Core" ;
+    gst:legalCitation "Sec 2(24), CGST Act 2017" ; rdfs:label "Commissioner"@en .
+gst:Board a owl:Class ; rdfs:subClassOf gst:GovernmentAuthority ; gst:module "Core" ;
+    gst:legalCitation "Sec 2(16), CGST Act 2017" ; rdfs:label "Board (CBIC)"@en ;
+    rdfs:comment "Central Board of Indirect Taxes and Customs, constituted under the Central Boards of Revenue Act, 1963."@en .
+gst:GSTCouncil a owl:Class ; rdfs:subClassOf gst:GovernmentAuthority ; gst:module "Core" ;
+    gst:legalCitation "Sec 2(36), CGST Act 2017; Article 279A, Constitution of India" ; rdfs:label "GST Council"@en .
+gst:AdjudicatingAuthority a owl:Class ; rdfs:subClassOf gst:GovernmentAuthority ; gst:module "Core" ;
+    gst:legalCitation "Sec 2(4), CGST Act 2017" ; rdfs:label "Adjudicating Authority"@en .
+gst:AppellateAuthority a owl:Class ; rdfs:subClassOf gst:GovernmentAuthority ; gst:module "Core" ;
+    gst:legalCitation "Sec 2(8), Sec 107, CGST Act 2017" ; rdfs:label "Appellate Authority"@en .
+gst:RevisionalAuthority a owl:Class ; rdfs:subClassOf gst:GovernmentAuthority ; gst:module "Core" ;
+    gst:legalCitation "Sec 2(99), Sec 108, CGST Act 2017" ; rdfs:label "Revisional Authority"@en .
+gst:AppellateTribunal a owl:Class ; rdfs:subClassOf gst:GovernmentAuthority ; gst:module "Core" ;
+    gst:legalCitation "Sec 2(9), Sec 109, CGST Act 2017" ; rdfs:label "GST Appellate Tribunal"@en .
+gst:AuthorityForAdvanceRuling a owl:Class ; rdfs:subClassOf gst:GovernmentAuthority ; gst:module "Core" ;
+    gst:legalCitation "Sec 96, CGST Act 2017" ; rdfs:label "Authority for Advance Ruling (AAR)"@en .
+gst:AppellateAuthorityForAdvanceRuling a owl:Class ; rdfs:subClassOf gst:GovernmentAuthority ; gst:module "Core" ;
+    gst:legalCitation "Sec 99, CGST Act 2017" ; rdfs:label "Appellate Authority for Advance Ruling (AAAR)"@en .
+gst:NationalAppellateAuthorityForAdvanceRuling a owl:Class ; rdfs:subClassOf gst:GovernmentAuthority ; gst:module "Core" ;
+    gst:legalCitation "Sec 101A, CGST Act 2017" ; rdfs:label "National Appellate Authority for Advance Ruling"@en .
+
+#################################################################
+#  MODULE 2: BUSINESS / TAXPAYER
+#################################################################
+
+gst:Business a owl:Class ; rdfs:subClassOf gst:GSTEntity ; gst:module "Business" ;
+    rdfs:label "Business"@en ;
+    gst:legalCitation "Sec 2(17), CGST Act 2017" ;
+    rdfs:comment "Any trade, commerce, manufacture, profession, vocation, adventure, wager, or similar activity, whether or not for pecuniary benefit, per the Sec 2(17) definition of 'business'."@en .
+
+gst:TaxablePerson a owl:Class ; rdfs:subClassOf gst:Business ; gst:module "Business" ;
+    gst:legalCitation "Sec 2(107), CGST Act 2017" ;
+    rdfs:label "Taxable Person"@en ;
+    rdfs:comment "A person who is registered or liable to be registered under Sec 22 or Sec 24."@en .
+
+gst:RegisteredPerson a owl:Class ; rdfs:subClassOf gst:TaxablePerson ; gst:module "Business" ;
+    gst:legalCitation "Sec 2(94), CGST Act 2017" ; rdfs:label "Registered Person"@en .
+
+gst:UnregisteredPerson a owl:Class ; rdfs:subClassOf gst:Business ; gst:module "Business" ; rdfs:label "Unregistered Person"@en .
+
+gst:MandatorilyRegisterableBusiness a owl:Class ; rdfs:subClassOf gst:Business ; gst:module "Business" ;
+    gst:legalCitation "Sec 22, Sec 24, CGST Act 2017" ;
+    rdfs:label "Mandatorily Registerable Business"@en ;
+    rdfs:comment "A Business that has crossed its applicable Sec 22 aggregate-turnover threshold, or falls under one of the Sec 24 compulsory-registration categories, and is therefore liable to be registered irrespective of turnover."@en .
+
+gst:TaxablePerson owl:equivalentClass [
+    a owl:Class ;
+    owl:unionOf ( gst:RegisteredPerson gst:MandatorilyRegisterableBusiness )
+] .
+
+### --- Business Type (industry classification, used for composition/rate purposes) ---
+
+gst:BusinessType a owl:Class ; rdfs:subClassOf gst:GSTEntity ; gst:module "Business" ;
+    rdfs:label "Business Type"@en ;
+    rdfs:comment "Classification of a business by the nature of its economic activity, relevant to registration category, composition-scheme rate, and applicable exemptions."@en .
+
+gst:Manufacturer a owl:Class ; rdfs:subClassOf gst:BusinessType ; gst:module "Business" ; rdfs:label "Manufacturer"@en .
+gst:Trader a owl:Class ; rdfs:subClassOf gst:BusinessType ; gst:module "Business" ; rdfs:label "Trader"@en .
+gst:ServiceProvider a owl:Class ; rdfs:subClassOf gst:BusinessType ; gst:module "Business" ; rdfs:label "Service Provider"@en .
+gst:Exporter a owl:Class ; rdfs:subClassOf gst:BusinessType ; gst:module "Business" ; rdfs:label "Exporter"@en .
+gst:Importer a owl:Class ; rdfs:subClassOf gst:BusinessType ; gst:module "Business" ; rdfs:label "Importer"@en .
+gst:GoodsTransportAgency a owl:Class ; rdfs:subClassOf gst:BusinessType ; gst:module "Business" ;
+    rdfs:label "Goods Transport Agency"@en .
+gst:Agriculturist a owl:Class ; rdfs:subClassOf gst:BusinessType ; gst:module "Business" ;
+    gst:legalCitation "Sec 2(7), CGST Act 2017" ;
+    rdfs:comment "An agriculturist, to the extent of supply of produce out of cultivation of land, is not liable for registration per Sec 23(1)(b)."@en ;
+    rdfs:label "Agriculturist"@en .
+
+gst:ECommerceOperator a owl:Class ; rdfs:subClassOf gst:BusinessType ; gst:module "Business" ;
+    gst:legalCitation "Sec 2(45), Sec 24(x), CGST Act 2017" ;
+    rdfs:label "Electronic Commerce Operator"@en ;
+    rdfs:comment "Any person who owns/operates/manages a digital or electronic facility or platform for electronic commerce; compulsorily registerable under Sec 24."@en .
+
+gst:CasualTaxablePerson a owl:Class ; rdfs:subClassOf gst:BusinessType ; gst:module "Business" ;
+    gst:legalCitation "Sec 2(20), Sec 24(ii), CGST Act 2017" ;
+    rdfs:label "Casual Taxable Person"@en ;
+    rdfs:comment "A person who occasionally undertakes transactions involving supply of goods/services in a State/UT where he has no fixed place of business."@en .
+
+gst:NonResidentTaxablePerson a owl:Class ; rdfs:subClassOf gst:BusinessType ; gst:module "Business" ;
+    gst:legalCitation "Sec 2(77), Sec 24(v), CGST Act 2017" ;
+    rdfs:label "Non-Resident Taxable Person"@en ;
+    rdfs:comment "A person who occasionally undertakes transactions involving supply of goods/services but has no fixed place of business or residence in India."@en .
+
+gst:InputServiceDistributor a owl:Class ; rdfs:subClassOf gst:BusinessType ; gst:module "Business" ;
+    gst:legalCitation "Sec 2(61), Sec 24(viii), CGST Act 2017" ;
+    rdfs:label "Input Service Distributor (ISD)"@en ;
+    rdfs:comment "An office of the supplier of goods/services that receives tax invoices for input services and distributes the credit to other GSTINs of the same PAN."@en .
+
+gst:CompositionTaxpayer a owl:Class ; rdfs:subClassOf gst:RegisteredPerson ; gst:module "Business" ;
+    gst:legalCitation "Sec 10, CGST Act 2017" ;
+    rdfs:label "Composition Taxpayer"@en ;
+    rdfs:comment "A registered person who has opted to pay tax under the Sec 10 composition levy, subject to the applicable aggregate-turnover threshold and eligibility conditions."@en .
+
+gst:MSME a owl:Class ; rdfs:subClassOf gst:BusinessType ; gst:module "Business" ;
+    rdfs:label "Micro, Small or Medium Enterprise"@en ;
+    gst:sourceNote "Not defined under the CGST/IGST Acts; MSME classification derives from the MSME Development Act, 2006 (a separate statute). Included here as a stub for the AuditSure MSME-facing use case and for planned cross-domain extension - see Future Extensions. No numeric MSME investment/turnover thresholds are asserted since they are outside the GST Manual's scope."@en .
+
+[ a owl:AllDisjointClasses ;
+    owl:members ( gst:Manufacturer gst:Trader gst:ServiceProvider )
+] .
+
+#################################################################
+#  MODULE 3: REGISTRATION
+#################################################################
+
+gst:GSTRegistration a owl:Class ; rdfs:subClassOf gst:GSTEntity ; gst:module "Registration" ;
+    gst:legalCitation "Sec 25, CGST Act 2017; Rule 8-26, CGST Rules 2017" ;
+    rdfs:label "GST Registration"@en ;
+    rdfs:comment "The record of a taxpayer's registration under GST, identified by a GSTIN, having an effective date and a status."@en .
+
+gst:RegistrationStatus a owl:Class ; rdfs:subClassOf gst:GSTEntity ; gst:module "Registration" ;
+    rdfs:label "Registration Status"@en .
+
+gst:ActiveStatus a owl:NamedIndividual, gst:RegistrationStatus ; rdfs:label "Active"@en .
+gst:CancelledStatus a owl:NamedIndividual, gst:RegistrationStatus ;
+    gst:legalCitation "Sec 29, CGST Act 2017" ; rdfs:label "Cancelled"@en .
+gst:SuspendedStatus a owl:NamedIndividual, gst:RegistrationStatus ;
+    gst:legalCitation "Sec 29, Rule 21A, CGST Rules 2017" ; rdfs:label "Suspended"@en .
+gst:PendingForCancellationStatus a owl:NamedIndividual, gst:RegistrationStatus ; rdfs:label "Pending for Cancellation"@en .
+
+gst:RegistrationStatus owl:equivalentClass [
+    a owl:Class ;
+    owl:oneOf ( gst:ActiveStatus gst:CancelledStatus gst:SuspendedStatus gst:PendingForCancellationStatus )
+] .
+[ a owl:AllDifferent ; owl:distinctMembers ( gst:ActiveStatus gst:CancelledStatus gst:SuspendedStatus gst:PendingForCancellationStatus ) ] .
+
+gst:RegistrationCategory a owl:Class ; rdfs:subClassOf gst:GSTEntity ; gst:module "Registration" ;
+    rdfs:label "Registration Category"@en ;
+    rdfs:comment "The legal basis under which a Business is/would be registered."@en .
+
+gst:VoluntaryRegistration a owl:Class ; rdfs:subClassOf gst:RegistrationCategory ; gst:module "Registration" ;
+    gst:legalCitation "Sec 25(3), CGST Act 2017" ; rdfs:label "Voluntary Registration"@en .
+gst:ThresholdBasedRegistration a owl:Class ; rdfs:subClassOf gst:RegistrationCategory ; gst:module "Registration" ;
+    gst:legalCitation "Sec 22, CGST Act 2017" ; rdfs:label "Threshold-Based (Sec 22) Registration"@en .
+gst:CompulsoryRegistration a owl:Class ; rdfs:subClassOf gst:RegistrationCategory ; gst:module "Registration" ;
+    gst:legalCitation "Sec 24, CGST Act 2017" ;
+    rdfs:label "Compulsory (Sec 24) Registration"@en ;
+    rdfs:comment "Registration required irrespective of aggregate turnover, for the 11 categories of persons listed in Sec 24 (e.g. inter-State suppliers, casual taxable persons, persons liable under reverse charge, e-commerce operators, TDS/TCS deductors, ISDs, non-resident taxable persons, etc.)."@en .
+gst:CompositionRegistration a owl:Class ; rdfs:subClassOf gst:RegistrationCategory ; gst:module "Registration" ;
+    gst:legalCitation "Sec 10, CGST Act 2017" ; rdfs:label "Composition Registration"@en .
+gst:CasualRegistration a owl:Class ; rdfs:subClassOf gst:RegistrationCategory ; gst:module "Registration" ;
+    gst:legalCitation "Sec 27, CGST Act 2017" ; rdfs:label "Casual Taxable Person Registration"@en .
+gst:NonResidentRegistration a owl:Class ; rdfs:subClassOf gst:RegistrationCategory ; gst:module "Registration" ;
+    gst:legalCitation "Sec 27, CGST Act 2017" ; rdfs:label "Non-Resident Taxable Person Registration"@en .
+gst:ISDRegistration a owl:Class ; rdfs:subClassOf gst:RegistrationCategory ; gst:module "Registration" ;
+    gst:legalCitation "Sec 24(viii), CGST Act 2017" ; rdfs:label "Input Service Distributor Registration"@en .
+gst:TDSDeductorRegistration a owl:Class ; rdfs:subClassOf gst:RegistrationCategory ; gst:module "Registration" ;
+    gst:legalCitation "Sec 24(vi), Sec 51, CGST Act 2017" ; rdfs:label "TDS Deductor Registration"@en .
+gst:TCSCollectorRegistration a owl:Class ; rdfs:subClassOf gst:RegistrationCategory ; gst:module "Registration" ;
+    gst:legalCitation "Sec 24(x), Sec 52, CGST Act 2017" ; rdfs:label "TCS Collector Registration"@en .
+
+gst:ExemptionFromRegistration a owl:Class ; rdfs:subClassOf gst:GSTEntity ; gst:module "Registration" ;
+    gst:legalCitation "Sec 23, CGST Act 2017" ;
+    rdfs:label "Exemption from Registration"@en ;
+    rdfs:comment "Sec 23(1): persons engaged exclusively in supplying wholly-exempt or non-taxable goods/services, and agriculturists (to the extent of produce out of land cultivation), are not liable to register. Sec 23(2) additionally empowers the Government to notify other exempt categories."@en .
+
+#################################################################
+#  MODULE 4: TAXATION / LEVY
+#################################################################
+
+gst:Tax a owl:Class ; rdfs:subClassOf gst:GSTEntity ; gst:module "Taxation" ;
+    rdfs:label "Tax"@en ;
+    rdfs:comment "A component of GST leviable on a supply."@en .
+
+gst:CentralTax a owl:Class ; rdfs:subClassOf gst:Tax ; gst:module "Taxation" ;
+    gst:legalCitation "Sec 2(21), Sec 9, CGST Act 2017" ; rdfs:label "Central Tax (CGST)"@en .
+gst:StateTax a owl:Class ; rdfs:subClassOf gst:Tax ; gst:module "Taxation" ;
+    rdfs:label "State Tax (SGST)"@en ; gst:legalCitation "SGST Act of the respective State" .
+gst:UnionTerritoryTax a owl:Class ; rdfs:subClassOf gst:Tax ; gst:module "Taxation" ;
+    rdfs:label "Union Territory Tax (UTGST)"@en .
+gst:IntegratedTax a owl:Class ; rdfs:subClassOf gst:Tax ; gst:module "Taxation" ;
+    gst:legalCitation "Sec 2(1)(f)/Sec 5, IGST Act 2017" ; rdfs:label "Integrated Tax (IGST)"@en .
+gst:CompensationCess a owl:Class ; rdfs:subClassOf gst:Tax ; gst:module "Taxation" ;
+    gst:legalCitation "GST (Compensation to States) Act 2017" ; rdfs:label "Compensation Cess"@en .
+
+[ a owl:AllDisjointClasses ; owl:members ( gst:CentralTax gst:StateTax gst:UnionTerritoryTax gst:IntegratedTax gst:CompensationCess ) ] .
+
+gst:LevyMechanism a owl:Class ; rdfs:subClassOf gst:GSTEntity ; gst:module "Taxation" ;
+    rdfs:label "Levy Mechanism"@en .
+
+gst:ForwardCharge a owl:Class ; rdfs:subClassOf gst:LevyMechanism ; gst:module "Taxation" ;
+    gst:legalCitation "Sec 9(1), CGST Act 2017" ; rdfs:label "Forward Charge"@en ;
+    rdfs:comment "Tax is payable by the supplier of goods/services at the notified rate (statutory cap: not exceeding 20% CGST, mirrored by an equal SGST/UTGST rate, i.e. an effective combined cap of 40%)."@en .
+
+gst:ReverseChargeMechanism a owl:Class ; rdfs:subClassOf gst:LevyMechanism ; gst:module "Taxation" ;
+    gst:legalCitation "Sec 2(98), Sec 9(3), Sec 9(4), CGST Act 2017" ; rdfs:label "Reverse Charge Mechanism (RCM)"@en ;
+    rdfs:comment "Sec 9(3): tax on notified categories of supply is payable by the recipient. Sec 9(4): tax on supply of specified goods/services by an unregistered person to a specified registered recipient is payable by the recipient on reverse charge basis."@en .
+
+gst:CompositionLevy a owl:Class ; rdfs:subClassOf gst:LevyMechanism ; gst:module "Taxation" ;
+    gst:legalCitation "Sec 10, CGST Act 2017" ;
+    rdfs:label "Composition Levy"@en ;
+    rdfs:comment "An alternative levy under which an eligible registered person pays tax at a fixed, low rate on turnover in lieu of the normal rate, and cannot collect tax from recipients or claim input tax credit."@en ;
+    gst:sourceNote "The bar on collecting tax from recipients and on claiming input tax credit is per Sec 10(4), CGST Act 2017: 'A taxable person to whom the provisions of sub-section (1) or sub-section (2A) apply shall not collect any tax from the recipient... nor shall he be entitled to any credit of input tax.' This is a structural feature of the scheme (flat low rate in exchange for no ITC chain), not an amendable threshold, and is treated as reliable even though the exact clause text was not separately re-verified against the source manual's Sec 10 excerpt captured this session." .
+
+gst:CompositionLevyGoods a owl:Class ; rdfs:subClassOf gst:CompositionLevy ; gst:module "Taxation" ;
+    gst:legalCitation "Sec 10(1), CGST Act 2017" ;
+    rdfs:label "Composition Levy - Sec 10(1) (Goods/Restaurant)"@en ;
+    rdfs:comment "Rates: 1% of turnover (0.5% CGST + 0.5% SGST) for manufacturers; 2.5% CGST + 2.5% SGST for Schedule II para 6(b) restaurant-type suppliers; 0.5% CGST + 0.5% SGST for other eligible suppliers of goods. Threshold: aggregate turnover in the preceding FY did not exceed Rs 50 lakh, enhanceable by notification up to Rs 1.5 crore (Rs 75 lakh for specified special category States)."@en .
+
+gst:CompositionLevyServices a owl:Class ; rdfs:subClassOf gst:CompositionLevy ; gst:module "Taxation" ;
+    gst:legalCitation "Sec 10(2A), CGST Act 2017" ;
+    rdfs:label "Composition Levy - Sec 10(2A) (Services)"@en ;
+    rdfs:comment "Available to a registered person not otherwise eligible under Sec 10(1), whose aggregate turnover in the preceding FY did not exceed Rs 50 lakh; tax payable up to 3% CGST + 3% SGST (rate to be notified, capped at that ceiling)."@en .
+
+#################################################################
+#  MODULE 5: SUPPLY
+#################################################################
+
+gst:Supply a owl:Class ; rdfs:subClassOf gst:GSTEntity ; gst:module "Supply" ;
+    gst:legalCitation "Sec 7, CGST Act 2017" ;
+    rdfs:label "Supply"@en ;
+    rdfs:comment "Sec 7(1): includes all forms of supply of goods/services made for consideration in the course/furtherance of business (sale, transfer, barter, exchange, licence, rental, lease, disposal), import of services for consideration, and Schedule I activities made without consideration. Sec 7(1A) supplies are classified as goods or services per Schedule II. Sec 7(2): Schedule III activities and specified government activities are treated as neither a supply of goods nor of services."@en .
+
+gst:TaxableSupply a owl:Class ; rdfs:subClassOf gst:Supply ; gst:module "Supply" ;
+    gst:legalCitation "Sec 2(108), CGST Act 2017" ; rdfs:label "Taxable Supply"@en ;
+    rdfs:comment "A supply of goods or services which is leviable to tax under the Act."@en .
+
+gst:ExemptSupply a owl:Class ; rdfs:subClassOf gst:Supply ; gst:module "Supply" ;
+    gst:legalCitation "Sec 2(47), CGST Act 2017" ; rdfs:label "Exempt Supply"@en ;
+    rdfs:comment "Supply of goods/services which attracts nil rate of tax, or is wholly exempt under Sec 11 (CGST) / Sec 6 (IGST), and includes non-taxable supply."@en .
+
+gst:NilRatedSupply a owl:Class ; rdfs:subClassOf gst:ExemptSupply ; gst:module "Supply" ; rdfs:label "Nil Rated Supply"@en .
+gst:WhollyExemptSupply a owl:Class ; rdfs:subClassOf gst:ExemptSupply ; gst:module "Supply" ;
+    gst:legalCitation "Sec 11, CGST Act 2017" ; rdfs:label "Wholly Exempt Supply (Sec 11 notification)"@en .
+gst:NonTaxableSupply a owl:Class ; rdfs:subClassOf gst:ExemptSupply ; gst:module "Supply" ;
+    gst:legalCitation "Sec 2(78), CGST Act 2017" ; rdfs:label "Non-Taxable Supply"@en ;
+    rdfs:comment "A supply of goods or services which is not leviable to tax under the Act (e.g. alcoholic liquor for human consumption)."@en .
+
+gst:ExemptSupply owl:equivalentClass [
+    a owl:Class ; owl:unionOf ( gst:NilRatedSupply gst:WhollyExemptSupply gst:NonTaxableSupply )
+] .
+
+gst:ZeroRatedSupply a owl:Class ; rdfs:subClassOf gst:Supply ; gst:module "Supply" ;
+    gst:legalCitation "Sec 16, IGST Act 2017" ; rdfs:label "Zero Rated Supply"@en ;
+    rdfs:comment "Export of goods/services, or supply of goods/services to a SEZ developer/unit; eligible for refund per Sec 16(3) IGST Act, either under bond/LUT without payment of tax, or on payment of IGST with refund claim (subject to conditions/restrictions as notified)."@en .
+
+gst:DeemedExport a owl:Class ; rdfs:subClassOf gst:Supply ; gst:module "Supply" ;
+    gst:legalCitation "Sec 147, CGST Act 2017" ; rdfs:label "Deemed Export"@en .
+
+gst:CompositeSupply a owl:Class ; rdfs:subClassOf gst:Supply ; gst:module "Supply" ;
+    gst:legalCitation "Sec 2(30), Sec 8(a), CGST Act 2017" ; rdfs:label "Composite Supply"@en ;
+    rdfs:comment "Two or more taxable supplies naturally bundled and supplied in conjunction, one of which is a principal supply; taxed at the rate applicable to the principal supply."@en .
+
+gst:MixedSupply a owl:Class ; rdfs:subClassOf gst:Supply ; gst:module "Supply" ;
+    gst:legalCitation "Sec 2(74), Sec 8(b), CGST Act 2017" ; rdfs:label "Mixed Supply"@en ;
+    rdfs:comment "Two or more individual supplies made in conjunction for a single price, not being a composite supply; taxed at the rate of the supply attracting the highest rate."@en .
+
+gst:InterStateSupply a owl:Class ; rdfs:subClassOf gst:Supply ; gst:module "Supply" ;
+    gst:legalCitation "Sec 7, IGST Act 2017" ; rdfs:label "Inter-State Supply"@en .
+gst:IntraStateSupply a owl:Class ; rdfs:subClassOf gst:Supply ; gst:module "Supply" ;
+    gst:legalCitation "Sec 8, IGST Act 2017" ; rdfs:label "Intra-State Supply"@en .
+
+[ a owl:AllDisjointClasses ; owl:members ( gst:InterStateSupply gst:IntraStateSupply ) ] .
+[ a owl:AllDisjointClasses ; owl:members ( gst:TaxableSupply gst:ExemptSupply ) ] .
+[ a owl:AllDisjointClasses ; owl:members ( gst:CompositeSupply gst:MixedSupply ) ] .
+
+#################################################################
+#  MODULE 6: INPUT TAX CREDIT
+#################################################################
+
+gst:InputTaxCredit a owl:Class ; rdfs:subClassOf gst:GSTEntity ; gst:module "ITC" ;
+    gst:legalCitation "Sec 2(63), Sec 16, CGST Act 2017" ;
+    rdfs:label "Input Tax Credit"@en ;
+    rdfs:comment "Credit of input tax, i.e. CGST/SGST/UTGST/IGST charged on any supply of goods/services made to a registered person, usable to discharge output tax liability."@en .
+
+gst:ITCEligibilityCondition a owl:Class ; rdfs:subClassOf gst:GSTEntity ; gst:module "ITC" ;
+    gst:legalCitation "Sec 16(2), CGST Act 2017" ;
+    rdfs:label "ITC Eligibility Condition"@en ;
+    rdfs:comment "Sec 16(2) conditions, ALL of which must be satisfied to avail ITC: (a) possession of a tax invoice/debit note or other prescribed document; (aa) details of the invoice/debit note communicated under Sec 37 and not restricted under Sec 38; (b) receipt of the goods/services (including 'bill-to-ship-to' deemed receipt); (c) tax charged has actually been paid to Government by the supplier; (d) return under Sec 39 has been furnished. A time bar under Sec 16(4) restricts claiming ITC after 30 November following the end of the financial year (or annual return date, if earlier)."@en .
+
+gst:PossessionOfTaxInvoice a owl:NamedIndividual, gst:ITCEligibilityCondition ; rdfs:label "Possession of Tax Invoice/Debit Note"@en .
+gst:InvoiceDetailsCommunicated a owl:NamedIndividual, gst:ITCEligibilityCondition ; rdfs:label "Invoice Details Communicated (Sec 37/38)"@en .
+gst:ReceiptOfGoodsOrServices a owl:NamedIndividual, gst:ITCEligibilityCondition ; rdfs:label "Receipt of Goods or Services"@en .
+gst:TaxActuallyPaidToGovernment a owl:NamedIndividual, gst:ITCEligibilityCondition ; rdfs:label "Tax Actually Paid to Government"@en .
+gst:ReturnFurnished a owl:NamedIndividual, gst:ITCEligibilityCondition ; rdfs:label "Return Furnished under Sec 39"@en .
+gst:PaymentWithin180Days a owl:NamedIndividual, gst:ITCEligibilityCondition ;
+    gst:legalCitation "Second proviso to Sec 16(2), CGST Act 2017; Rule 37" ;
+    rdfs:label "Payment to Supplier within 180 Days"@en ;
+    rdfs:comment "If the recipient fails to pay the supplier (value + tax) within 180 days of the invoice, the corresponding ITC availed must be reversed with interest."@en .
+
+gst:BlockedCredit a owl:Class ; rdfs:subClassOf gst:GSTEntity ; gst:module "ITC" ;
+    gst:legalCitation "Sec 17(5), CGST Act 2017" ;
+    rdfs:label "Blocked Credit"@en ;
+    rdfs:comment "Categories of input tax on which ITC is NOT available under Sec 17(5), subject to listed exceptions."@en .
+
+gst:MotorVehicleBlockedCredit a owl:Class ; rdfs:subClassOf gst:BlockedCredit ; gst:module "ITC" ;
+    gst:legalCitation "Sec 17(5)(a)/(aa), CGST Act 2017" ;
+    rdfs:label "Motor Vehicle / Conveyance ITC Block"@en ;
+    rdfs:comment "Blocked for motor vehicles (seating <=13 incl. driver) and vessels/aircraft used for personal transport, except when used for further supply, transport of passengers, training, or transport of goods."@en .
+gst:FoodBeverageBlockedCredit a owl:Class ; rdfs:subClassOf gst:BlockedCredit ; gst:module "ITC" ;
+    gst:legalCitation "Sec 17(5)(b), CGST Act 2017" ; rdfs:label "Food, Beverages, Outdoor Catering ITC Block"@en .
+gst:ClubMembershipBlockedCredit a owl:Class ; rdfs:subClassOf gst:BlockedCredit ; gst:module "ITC" ;
+    gst:legalCitation "Sec 17(5)(b), CGST Act 2017" ; rdfs:label "Club/Health/Fitness Membership ITC Block"@en .
+gst:WorksContractBlockedCredit a owl:Class ; rdfs:subClassOf gst:BlockedCredit ; gst:module "ITC" ;
+    gst:legalCitation "Sec 17(5)(c), CGST Act 2017" ;
+    rdfs:label "Works Contract ITC Block"@en ;
+    rdfs:comment "Blocked for works contract services for construction of an immovable property (other than plant & machinery), except where it is an input service for further supply of works contract service."@en .
+gst:PersonalConsumptionBlockedCredit a owl:Class ; rdfs:subClassOf gst:BlockedCredit ; gst:module "ITC" ;
+    gst:legalCitation "Sec 17(5)(g), CGST Act 2017" ; rdfs:label "Goods/Services for Personal Consumption ITC Block"@en .
+gst:CompositionTaxBlockedCredit a owl:Class ; rdfs:subClassOf gst:BlockedCredit ; gst:module "ITC" ;
+    gst:legalCitation "Sec 17(5)(e), CGST Act 2017" ; rdfs:label "Tax Paid under Composition Levy ITC Block"@en .
+
+#################################################################
+#  MODULE 7: INVOICES / DOCUMENTS
+#################################################################
+
+gst:Document a owl:Class ; rdfs:subClassOf gst:GSTEntity ; gst:module "Invoice" ;
+    rdfs:label "GST Document"@en .
+
+gst:TaxInvoice a owl:Class ; rdfs:subClassOf gst:Document ; gst:module "Invoice" ;
+    gst:legalCitation "Sec 31, CGST Act 2017; Rule 46" ; rdfs:label "Tax Invoice"@en .
+gst:BillOfSupply a owl:Class ; rdfs:subClassOf gst:Document ; gst:module "Invoice" ;
+    gst:legalCitation "Sec 31(3)(c), CGST Act 2017; Rule 49" ;
+    rdfs:label "Bill of Supply"@en ;
+    rdfs:comment "Issued instead of a tax invoice by a registered person supplying exempted goods/services, or paying tax under the Sec 10 composition levy."@en .
+gst:CreditNote a owl:Class ; rdfs:subClassOf gst:Document ; gst:module "Invoice" ;
+    gst:legalCitation "Sec 34(1), CGST Act 2017" ; rdfs:label "Credit Note"@en .
+gst:DebitNote a owl:Class ; rdfs:subClassOf gst:Document ; gst:module "Invoice" ;
+    gst:legalCitation "Sec 34(3), CGST Act 2017" ; rdfs:label "Debit Note"@en .
+gst:ReceiptVoucher a owl:Class ; rdfs:subClassOf gst:Document ; gst:module "Invoice" ;
+    gst:legalCitation "Sec 31(3)(d), CGST Act 2017" ; rdfs:label "Receipt Voucher"@en .
+gst:RefundVoucher a owl:Class ; rdfs:subClassOf gst:Document ; gst:module "Invoice" ;
+    gst:legalCitation "Sec 31(3)(e), CGST Act 2017" ; rdfs:label "Refund Voucher"@en .
+gst:PaymentVoucher a owl:Class ; rdfs:subClassOf gst:Document ; gst:module "Invoice" ;
+    gst:legalCitation "Sec 31(3)(g), CGST Act 2017" ; rdfs:label "Payment Voucher (Reverse Charge)"@en .
+gst:DeliveryChallan a owl:Class ; rdfs:subClassOf gst:Document ; gst:module "Invoice" ;
+    gst:legalCitation "Rule 55, CGST Rules 2017" ; rdfs:label "Delivery Challan"@en .
+gst:EInvoice a owl:Class ; rdfs:subClassOf gst:TaxInvoice ; gst:module "Invoice" ;
+    gst:legalCitation "Rule 48(4), CGST Rules 2017; Notification 70/2019-CT & successors" ;
+    rdfs:label "E-Invoice"@en ;
+    rdfs:comment "A tax invoice reported to the Invoice Registration Portal (IRP) and bearing an Invoice Reference Number (IRN) and QR code, mandatory for notified classes of registered persons above the applicable aggregate-turnover threshold."@en .
+gst:EWayBill a owl:Class ; rdfs:subClassOf gst:Document ; gst:module "Invoice" ;
+    gst:legalCitation "Sec 68, CGST Act 2017; Rule 138, CGST Rules 2017" ;
+    rdfs:label "E-Way Bill"@en ;
+    rdfs:comment "Electronic document required, per Rule 138, for movement of consignments of goods whose value exceeds Rs 50,000."@en .
+
+[ a owl:AllDisjointClasses ; owl:members ( gst:TaxInvoice gst:BillOfSupply gst:CreditNote gst:DebitNote
+                                        gst:ReceiptVoucher gst:RefundVoucher gst:PaymentVoucher gst:DeliveryChallan ) ] .
+
+#################################################################
+#  MODULE 8: RETURNS
+#################################################################
+
+gst:Return a owl:Class ; rdfs:subClassOf gst:GSTEntity ; gst:module "Returns" ;
+    gst:legalCitation "Chapter IX (Sec 37-48), CGST Act 2017" ;
+    rdfs:label "Return"@en .
+
+gst:OutwardSupplyReturn a owl:Class ; rdfs:subClassOf gst:Return ; gst:module "Returns" ;
+    gst:legalCitation "Sec 37, CGST Act 2017" ; rdfs:label "Outward Supply Return (GSTR-1)"@en .
+gst:SummaryReturn a owl:Class ; rdfs:subClassOf gst:Return ; gst:module "Returns" ;
+    gst:legalCitation "Sec 39(1), CGST Act 2017" ;
+    rdfs:label "Summary Self-Assessed Return (GSTR-3B)"@en .
+gst:CompositionReturn a owl:Class ; rdfs:subClassOf gst:Return ; gst:module "Returns" ;
+    gst:legalCitation "Sec 39(2), CGST Act 2017" ; rdfs:label "Composition Taxpayer Return (GSTR-4)"@en .
+gst:NonResidentReturn a owl:Class ; rdfs:subClassOf gst:Return ; gst:module "Returns" ;
+    gst:legalCitation "Sec 39(5), CGST Act 2017" ; rdfs:label "Non-Resident Taxable Person Return (GSTR-5)"@en .
+gst:ISDReturn a owl:Class ; rdfs:subClassOf gst:Return ; gst:module "Returns" ;
+    gst:legalCitation "Sec 39(4), CGST Act 2017" ; rdfs:label "Input Service Distributor Return (GSTR-6)"@en .
+gst:TDSReturn a owl:Class ; rdfs:subClassOf gst:Return ; gst:module "Returns" ;
+    gst:legalCitation "Sec 39(3), Sec 51, CGST Act 2017" ; rdfs:label "TDS Return (GSTR-7)"@en .
+gst:TCSStatement a owl:Class ; rdfs:subClassOf gst:Return ; gst:module "Returns" ;
+    gst:legalCitation "Sec 52(4), CGST Act 2017" ; rdfs:label "TCS Statement (GSTR-8)"@en .
+gst:AnnualReturn a owl:Class ; rdfs:subClassOf gst:Return ; gst:module "Returns" ;
+    gst:legalCitation "Sec 44, CGST Act 2017" ;
+    rdfs:label "Annual Return (GSTR-9)"@en ;
+    rdfs:comment "Every registered person (other than an ISD, casual/non-resident taxable person, and TDS/TCS persons) must furnish an annual return per Sec 44, along with a self-certified reconciliation statement (GSTR-9C) where turnover exceeds the notified threshold."@en .
+gst:ReconciliationStatement a owl:Class ; rdfs:subClassOf gst:Document ; gst:module "Returns" ;
+    gst:legalCitation "Sec 44, CGST Act 2017" ; rdfs:label "Self-Certified Reconciliation Statement (GSTR-9C)"@en .
+gst:FinalReturn a owl:Class ; rdfs:subClassOf gst:Return ; gst:module "Returns" ;
+    gst:legalCitation "Sec 45, CGST Act 2017" ;
+    rdfs:label "Final Return (GSTR-10)"@en ;
+    rdfs:comment "Filed within 3 months of cancellation of registration or order of cancellation, whichever is later."@en .
+
+gst:ReturnFrequency a owl:Class ; rdfs:subClassOf gst:GSTEntity ; gst:module "Returns" ; rdfs:label "Return Frequency"@en .
+gst:MonthlyFrequency a owl:NamedIndividual, gst:ReturnFrequency ; rdfs:label "Monthly"@en .
+gst:QuarterlyFrequency a owl:NamedIndividual, gst:ReturnFrequency ;
+    gst:legalCitation "QRMP Scheme, Notification 84/2020-CT" ; rdfs:label "Quarterly (QRMP)"@en .
+gst:AnnualFrequency a owl:NamedIndividual, gst:ReturnFrequency ; rdfs:label "Annual"@en .
+gst:ReturnFrequency owl:equivalentClass [ a owl:Class ; owl:oneOf ( gst:MonthlyFrequency gst:QuarterlyFrequency gst:AnnualFrequency ) ] .
+
+#################################################################
+#  MODULE 9: PAYMENT (TDS / TCS / INTEREST / LATE FEE)
+#################################################################
+
+gst:PaymentObligation a owl:Class ; rdfs:subClassOf gst:GSTEntity ; gst:module "Payment" ;
+    gst:legalCitation "Chapter X (Sec 49-53A), CGST Act 2017" ; rdfs:label "Payment Obligation"@en .
+
+gst:TaxDeductionAtSource a owl:Class ; rdfs:subClassOf gst:PaymentObligation ; gst:module "Payment" ;
+    gst:legalCitation "Sec 51, CGST Act 2017" ;
+    rdfs:label "Tax Deduction at Source (TDS)"@en ;
+    rdfs:comment "Specified deductors (government departments, local authorities, PSUs, notified persons) must deduct tax at 1% CGST + 1% SGST (2% total, or 2% IGST) from the payment made/credited to a supplier, where the total value of a contract of taxable supply exceeds Rs 2,50,000 (excluding tax)."@en .
+
+gst:TaxCollectionAtSource a owl:Class ; rdfs:subClassOf gst:PaymentObligation ; gst:module "Payment" ;
+    gst:legalCitation "Sec 52, CGST Act 2017" ;
+    rdfs:label "Tax Collection at Source (TCS)"@en ;
+    rdfs:comment "Every e-commerce operator (other than an agent) must collect tax not exceeding 1% (notified at 0.5% CGST + 0.5% SGST, or 1% IGST) of the net value of taxable supplies made through it by other suppliers, where consideration is collected by the operator."@en .
+
+gst:Interest a owl:Class ; rdfs:subClassOf gst:PaymentObligation ; gst:module "Payment" ;
+    gst:legalCitation "Sec 50, CGST Act 2017" ; rdfs:label "Interest"@en .
+gst:InterestOnDelayedPayment a owl:Class ; rdfs:subClassOf gst:Interest ; gst:module "Payment" ;
+    gst:legalCitation "Sec 50(1), CGST Act 2017" ;
+    rdfs:label "Interest on Delayed Payment of Tax"@en ;
+    rdfs:comment "18% p.a. on tax paid beyond the due date, computed (since the 2021 amendment) only on the portion of tax paid by debiting the electronic cash ledger, i.e. net-of-ITC liability."@en .
+gst:InterestOnWronglyAvailedITC a owl:Class ; rdfs:subClassOf gst:Interest ; gst:module "Payment" ;
+    gst:legalCitation "Sec 50(3), CGST Act 2017; Rule 88B" ;
+    rdfs:label "Interest on Wrongly Availed and Utilised ITC"@en ;
+    rdfs:comment "24% p.a. where input tax credit has been wrongly availed AND utilised."@en .
+gst:InterestOnDelayedRefund a owl:Class ; rdfs:subClassOf gst:Interest ; gst:module "Payment" ;
+    gst:legalCitation "Sec 56, CGST Act 2017" ; rdfs:label "Interest on Delayed Refund"@en .
+
+gst:LateFee a owl:Class ; rdfs:subClassOf gst:PaymentObligation ; gst:module "Payment" ;
+    gst:legalCitation "Sec 47, CGST Act 2017" ; rdfs:label "Late Fee"@en .
+
+#################################################################
+#  MODULE 10: REFUND
+#################################################################
+
+gst:Refund a owl:Class ; rdfs:subClassOf gst:GSTEntity ; gst:module "Refund" ;
+    gst:legalCitation "Sec 54, CGST Act 2017" ;
+    rdfs:label "Refund"@en ;
+    rdfs:comment "Any registered person may claim refund of tax/interest/other amount within 2 years from the relevant date. Documentary evidence of no unjust enrichment is not required for claims below Rs 2 lakh (self-certification suffices). Up to 90% of a zero-rated-supply refund claim may be granted provisionally within 60 days, subject to conditions; the balance sanctioned after verification."@en .
+
+gst:RefundOfUnutilisedITC a owl:Class ; rdfs:subClassOf gst:Refund ; gst:module "Refund" ;
+    gst:legalCitation "Sec 54(3), CGST Act 2017" ;
+    rdfs:label "Refund of Unutilised Input Tax Credit"@en ;
+    rdfs:comment "Available only for (a) zero-rated supplies made without payment of tax, or (b) inverted duty structure (input tax rate higher than output tax rate), excluding notified goods/services and excluding cases where export duty is payable."@en .
+gst:RefundOfZeroRatedSupply a owl:Class ; rdfs:subClassOf gst:Refund ; gst:module "Refund" ; rdfs:label "Refund on Zero-Rated Supply"@en .
+gst:RefundOfExcessPayment a owl:Class ; rdfs:subClassOf gst:Refund ; gst:module "Refund" ; rdfs:label "Refund of Excess Tax Paid"@en .
+gst:ProvisionalRefund a owl:Class ; rdfs:subClassOf gst:Refund ; gst:module "Refund" ;
+    gst:legalCitation "Sec 54(6), CGST Act 2017; Rule 91" ; rdfs:label "Provisional Refund (90%)"@en .
+
+#################################################################
+#  MODULE 11: ASSESSMENT
+#################################################################
+
+gst:Assessment a owl:Class ; rdfs:subClassOf gst:GSTEntity ; gst:module "Assessment" ;
+    gst:legalCitation "Chapter XII (Sec 59-64), CGST Act 2017" ; rdfs:label "Assessment"@en .
+
+gst:SelfAssessment a owl:Class ; rdfs:subClassOf gst:Assessment ; gst:module "Assessment" ;
+    gst:legalCitation "Sec 59, CGST Act 2017" ; rdfs:label "Self-Assessment"@en .
+gst:ProvisionalAssessment a owl:Class ; rdfs:subClassOf gst:Assessment ; gst:module "Assessment" ;
+    gst:legalCitation "Sec 60, CGST Act 2017" ; rdfs:label "Provisional Assessment"@en .
+gst:ScrutinyOfReturns a owl:Class ; rdfs:subClassOf gst:Assessment ; gst:module "Assessment" ;
+    gst:legalCitation "Sec 61, CGST Act 2017" ; rdfs:label "Scrutiny of Returns"@en .
+gst:AssessmentOfNonFilers a owl:Class ; rdfs:subClassOf gst:Assessment ; gst:module "Assessment" ;
+    gst:legalCitation "Sec 62, CGST Act 2017" ; rdfs:label "Best Judgment Assessment of Non-Filers"@en .
+gst:AssessmentOfUnregisteredPersons a owl:Class ; rdfs:subClassOf gst:Assessment ; gst:module "Assessment" ;
+    gst:legalCitation "Sec 63, CGST Act 2017" ; rdfs:label "Assessment of Unregistered Persons"@en .
+gst:SummaryAssessment a owl:Class ; rdfs:subClassOf gst:Assessment ; gst:module "Assessment" ;
+    gst:legalCitation "Sec 64, CGST Act 2017" ;
+    rdfs:label "Summary Assessment"@en ;
+    rdfs:comment "In special cases, to protect revenue interest, with prior permission of Additional/Joint Commissioner."@en .
+
+#################################################################
+#  MODULE 12: AUDIT
+#################################################################
+
+gst:Audit a owl:Class ; rdfs:subClassOf gst:GSTEntity ; gst:module "Audit" ;
+    gst:legalCitation "Chapter XIII (Sec 65-66), CGST Act 2017" ; rdfs:label "Audit"@en .
+
+gst:AuditByTaxAuthorities a owl:Class ; rdfs:subClassOf gst:Audit ; gst:module "Audit" ;
+    gst:legalCitation "Sec 65, CGST Act 2017" ;
+    rdfs:label "Audit by Tax Authorities"@en ;
+    rdfs:comment "Commissioner (or authorised officer) may undertake audit at the place of business or in office, with 15 working days prior notice; to be completed within 3 months (extendable by 6 months by Commissioner)."@en .
+gst:SpecialAudit a owl:Class ; rdfs:subClassOf gst:Audit ; gst:module "Audit" ;
+    gst:legalCitation "Sec 66, CGST Act 2017" ;
+    rdfs:label "Special Audit"@en ;
+    rdfs:comment "Directed by an officer (not below Assistant Commissioner) with Commissioner's approval, having regard to the nature/complexity of the case and interest of revenue, conducted by a nominated Chartered/Cost Accountant."@en .
+
+#################################################################
+#  MODULE 13: DEMANDS & RECOVERY
+#################################################################
+
+gst:DemandAndRecovery a owl:Class ; rdfs:subClassOf gst:GSTEntity ; gst:module "DemandsAndRecovery" ;
+    gst:legalCitation "Chapter XV (Sec 73-84), CGST Act 2017" ; rdfs:label "Demand and Recovery"@en .
+
+gst:ShowCauseNotice a owl:Class ; rdfs:subClassOf gst:DemandAndRecovery ; gst:module "DemandsAndRecovery" ;
+    rdfs:label "Show Cause Notice"@en .
+
+gst:SCNNonFraudCase a owl:Class ; rdfs:subClassOf gst:ShowCauseNotice ; gst:module "DemandsAndRecovery" ;
+    gst:legalCitation "Sec 73, CGST Act 2017 (omitted/subsumed for periods from FY 2024-25 by Sec 74A)" ;
+    rdfs:label "Demand Notice - Non-Fraud (Sec 73, up to FY 2023-24)"@en ;
+    rdfs:comment "Applicable where tax is unpaid/short-paid/erroneously refunded, or ITC wrongly availed/utilised, for reasons OTHER than fraud, wilful misstatement or suppression of facts."@en .
+gst:SCNFraudCase a owl:Class ; rdfs:subClassOf gst:ShowCauseNotice ; gst:module "DemandsAndRecovery" ;
+    gst:legalCitation "Sec 74, CGST Act 2017 (omitted/subsumed for periods from FY 2024-25 by Sec 74A)" ;
+    rdfs:label "Demand Notice - Fraud (Sec 74, up to FY 2023-24)"@en ;
+    rdfs:comment "Applicable where non/short payment or wrong ITC availment is BY REASON OF fraud, wilful misstatement or suppression of facts."@en .
+gst:SCNUnifiedFY2025Onwards a owl:Class ; rdfs:subClassOf gst:ShowCauseNotice ; gst:module "DemandsAndRecovery" ;
+    gst:legalCitation "Sec 74A, CGST Act 2017 (inserted by Finance (No. 2) Act, 2024, applicable from FY 2024-25 onwards)" ;
+    rdfs:label "Unified Demand Notice (Sec 74A, FY 2024-25 onwards)"@en ;
+    rdfs:comment "Replaces the Sec 73/74 dichotomy for periods from FY 2024-25 onwards with a single procedure carrying different limitation periods and penalty exposure depending on presence of fraud/wilful misstatement/suppression."@en .
+
+gst:Recovery a owl:Class ; rdfs:subClassOf gst:DemandAndRecovery ; gst:module "DemandsAndRecovery" ;
+    gst:legalCitation "Sec 79, CGST Act 2017" ; rdfs:label "Recovery of Tax"@en .
+
+#################################################################
+#  MODULE 14: PENALTIES & OFFENCES
+#################################################################
+
+gst:Offence a owl:Class ; rdfs:subClassOf gst:GSTEntity ; gst:module "Penalty" ;
+    gst:legalCitation "Sec 122, CGST Act 2017" ;
+    rdfs:label "Offence"@en ;
+    rdfs:comment "Sec 122(1) lists 21 specified offences (e.g. supply without invoice, issuing invoice without supply, collecting-but-not-remitting tax, fraudulent ITC availment, obstruction of officers, etc.), each attracting a penalty of Rs 10,000 or the tax evaded/ITC wrongly availed (whichever is higher). Sec 122(2) prescribes a general penalty (Rs 10,000 or 10% of tax short-paid for non-fraud; the higher of Rs 10,000 or the tax evaded for fraud cases)."@en .
+
+gst:InvoiceViolationOffence a owl:Class ; rdfs:subClassOf gst:Offence ; gst:module "Penalty" ;
+    gst:legalCitation "Sec 122(1)(i)/(ii), CGST Act 2017" ; rdfs:label "Invoice-related Offence"@en .
+gst:TaxCollectedNotRemittedOffence a owl:Class ; rdfs:subClassOf gst:Offence ; gst:module "Penalty" ;
+    gst:legalCitation "Sec 122(1)(iii), CGST Act 2017" ; rdfs:label "Tax Collected but not Remitted (beyond 3 months)"@en .
+gst:WrongfulITCOffence a owl:Class ; rdfs:subClassOf gst:Offence ; gst:module "Penalty" ;
+    gst:legalCitation "Sec 122(1)(vii)-(x), CGST Act 2017" ; rdfs:label "Fraudulent/Wrongful ITC Availment Offence"@en .
+gst:FailureToRegisterOffence a owl:Class ; rdfs:subClassOf gst:Offence ; gst:module "Penalty" ;
+    gst:legalCitation "Sec 122(1)(xi), CGST Act 2017" ; rdfs:label "Failure to Register Offence"@en .
+gst:ObstructionOfOfficerOffence a owl:Class ; rdfs:subClassOf gst:Offence ; gst:module "Penalty" ;
+    gst:legalCitation "Sec 122(1)(xviii), CGST Act 2017" ; rdfs:label "Obstruction of Proper Officer Offence"@en .
+
+gst:Penalty a owl:Class ; rdfs:subClassOf gst:GSTEntity ; gst:module "Penalty" ;
+    rdfs:label "Penalty"@en .
+gst:GeneralPenalty a owl:Class ; rdfs:subClassOf gst:Penalty ; gst:module "Penalty" ;
+    gst:legalCitation "Sec 125, CGST Act 2017" ;
+    rdfs:label "General Penalty (Sec 125)"@en ;
+    rdfs:comment "Up to Rs 25,000, for contravention of any provision for which no separate penalty is specified."@en .
+gst:Confiscation a owl:Class ; rdfs:subClassOf gst:GSTEntity ; gst:module "Penalty" ;
+    gst:legalCitation "Sec 130, CGST Act 2017" ; rdfs:label "Confiscation of Goods/Conveyances"@en .
+
+#################################################################
+#  MODULE 15: ADVANCE RULING
+#################################################################
+
+gst:AdvanceRuling a owl:Class ; rdfs:subClassOf gst:GSTEntity ; gst:module "AdvanceRuling" ;
+    gst:legalCitation "Chapter XVII (Sec 95-106), CGST Act 2017" ;
+    rdfs:label "Advance Ruling"@en ;
+    rdfs:comment "A written decision by the AAR/AAAR on questions specified in Sec 97(2)/Sec 100, sought by an applicant on matters relating to classification, applicability of notifications, valuation, ITC admissibility, registration liability, or whether an activity amounts to a supply."@en .
+
+#################################################################
+#  MODULE 16: APPEALS & REVISION
+#################################################################
+
+gst:Appeal a owl:Class ; rdfs:subClassOf gst:GSTEntity ; gst:module "Appeals" ;
+    gst:legalCitation "Chapter XVIII (Sec 107-118), CGST Act 2017" ; rdfs:label "Appeal"@en .
+
+gst:AppealToAppellateAuthority a owl:Class ; rdfs:subClassOf gst:Appeal ; gst:module "Appeals" ;
+    gst:legalCitation "Sec 107, CGST Act 2017" ;
+    rdfs:label "Appeal to Appellate Authority"@en ;
+    rdfs:comment "Filed within 3 months of communication of the decision/order (condonable by a further 1 month on sufficient cause). Pre-deposit: full amount of admitted tax/interest/fine/fee/penalty, plus 10% of the disputed tax amount (capped at Rs 20 crore)."@en .
+gst:AppealToAppellateTribunal a owl:Class ; rdfs:subClassOf gst:Appeal ; gst:module "Appeals" ;
+    gst:legalCitation "Sec 112, CGST Act 2017" ; rdfs:label "Appeal to GST Appellate Tribunal"@en .
+gst:AppealToHighCourt a owl:Class ; rdfs:subClassOf gst:Appeal ; gst:module "Appeals" ;
+    gst:legalCitation "Sec 117, CGST Act 2017" ; rdfs:label "Appeal to High Court"@en .
+gst:AppealToSupremeCourt a owl:Class ; rdfs:subClassOf gst:Appeal ; gst:module "Appeals" ;
+    gst:legalCitation "Sec 118, CGST Act 2017" ; rdfs:label "Appeal to Supreme Court"@en .
+
+#################################################################
+#  MODULE 17: TRANSITIONAL PROVISIONS
+#################################################################
+
+gst:TransitionalProvision a owl:Class ; rdfs:subClassOf gst:GSTEntity ; gst:module "Transitional" ;
+    gst:legalCitation "Chapter XX (Sec 139-142), CGST Act 2017" ;
+    rdfs:label "Transitional Provision"@en ;
+    rdfs:comment "Provisions migrating registration, ITC carry-forward, and pending proceedings from the pre-GST indirect tax regime."@en .
+
+#################################################################
+#  MODULE 18: LEGAL REFERENCES
+#  (Acts, Chapters, Sections, Rules, Notifications, Circulars, Schedules)
+#################################################################
+
+gst:LegalReference a owl:Class ; rdfs:subClassOf gst:GSTEntity ; gst:module "LegalReferences" ;
+    rdfs:label "Legal Reference"@en ;
+    rdfs:comment "Root class for citable legal-reference artefacts: Acts, Chapters, Sections, Rules, Notifications, Circulars, Orders, Instructions, Schedules."@en .
+
+gst:Act a owl:Class ; rdfs:subClassOf gst:LegalReference ; gst:module "LegalReferences" ; rdfs:label "Act"@en .
+gst:Rules a owl:Class ; rdfs:subClassOf gst:LegalReference ; gst:module "LegalReferences" ; rdfs:label "Rules"@en .
+gst:Chapter a owl:Class ; rdfs:subClassOf gst:LegalReference ; gst:module "LegalReferences" ; rdfs:label "Chapter"@en .
+gst:Section a owl:Class ; rdfs:subClassOf gst:LegalReference ; gst:module "LegalReferences" ; rdfs:label "Section"@en .
+gst:Rule a owl:Class ; rdfs:subClassOf gst:LegalReference ; gst:module "LegalReferences" ; rdfs:label "Rule"@en .
+gst:Schedule a owl:Class ; rdfs:subClassOf gst:LegalReference ; gst:module "LegalReferences" ; rdfs:label "Schedule"@en .
+gst:Notification a owl:Class ; rdfs:subClassOf gst:LegalReference ; gst:module "LegalReferences" ; rdfs:label "Notification"@en .
+gst:Circular a owl:Class ; rdfs:subClassOf gst:LegalReference ; gst:module "LegalReferences" ; rdfs:label "Circular"@en .
+gst:Order a owl:Class ; rdfs:subClassOf gst:LegalReference ; gst:module "LegalReferences" ; rdfs:label "Removal of Difficulties Order"@en .
+gst:Instruction a owl:Class ; rdfs:subClassOf gst:LegalReference ; gst:module "LegalReferences" ; rdfs:label "Instruction"@en .
+
+[ a owl:AllDisjointClasses ; owl:members ( gst:Act gst:Rules gst:Chapter gst:Section gst:Rule gst:Schedule
+                                        gst:Notification gst:Circular gst:Order gst:Instruction ) ] .
+
+#################################################################
+#  MODULE 19: THRESHOLDS (cross-cutting reference class)
+#################################################################
+
+gst:Threshold a owl:Class ; rdfs:subClassOf gst:GSTEntity ; gst:module "Thresholds" ;
+    rdfs:label "Threshold"@en ;
+    rdfs:comment "A numeric monetary/temporal limit prescribed by GST law that triggers or bounds a legal consequence (registration liability, composition eligibility, TDS/e-invoicing/e-way-bill applicability, refund documentary-evidence waiver, appeal pre-deposit cap, etc.)."@en .
+
+#################################################################
+#  OBJECT PROPERTIES
+#################################################################
+
+gst:hasBusinessType a owl:ObjectProperty ; rdfs:domain gst:Business ; rdfs:range gst:BusinessType ;
+    rdfs:label "hasBusinessType"@en .
+gst:belongsToState a owl:ObjectProperty ; rdfs:domain gst:Business ; rdfs:range gst:State ;
+    rdfs:label "belongsToState"@en .
+gst:hasJurisdiction a owl:ObjectProperty ; rdfs:domain gst:Business ; rdfs:range gst:Jurisdiction ;
+    rdfs:label "hasJurisdiction"@en .
+gst:hasRegistrationStatus a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain gst:Business ; rdfs:range gst:RegistrationStatus ;
+    rdfs:label "hasRegistrationStatus"@en .
+gst:hasGSTRegistration a owl:ObjectProperty, owl:FunctionalProperty ; rdfs:domain gst:RegisteredPerson ; rdfs:range gst:GSTRegistration ;
+    rdfs:label "hasGSTRegistration"@en .
+gst:requiresRegistration a owl:ObjectProperty ; rdfs:domain gst:Business ; rdfs:range gst:RegistrationCategory ;
+    rdfs:label "requiresRegistration"@en .
+gst:isEligibleForComposition a owl:ObjectProperty ; rdfs:domain gst:Business ; rdfs:range gst:CompositionLevy ;
+    rdfs:label "isEligibleForComposition"@en .
+gst:hasApplicableSection a owl:ObjectProperty ; rdfs:domain gst:GSTEntity ; rdfs:range gst:Section ;
+    rdfs:label "hasApplicableSection"@en .
+gst:governedByRule a owl:ObjectProperty ; rdfs:domain gst:GSTEntity ; rdfs:range gst:Rule ;
+    rdfs:label "governedByRule"@en .
+gst:requiresReturn a owl:ObjectProperty ; rdfs:domain gst:Business ; rdfs:range gst:Return ;
+    rdfs:label "requiresReturn"@en .
+gst:hasReturnFrequency a owl:ObjectProperty ; rdfs:domain gst:Return ; rdfs:range gst:ReturnFrequency ;
+    rdfs:label "hasReturnFrequency"@en .
+gst:hasPenalty a owl:ObjectProperty ; rdfs:domain gst:Offence ; rdfs:range gst:Penalty ;
+    rdfs:label "hasPenalty"@en .
+gst:hasInterest a owl:ObjectProperty ; rdfs:domain gst:PaymentObligation ; rdfs:range gst:Interest ;
+    rdfs:label "hasInterest"@en .
+gst:eligibleForRefund a owl:ObjectProperty ; rdfs:domain gst:Business ; rdfs:range gst:Refund ;
+    rdfs:label "eligibleForRefund"@en .
+gst:hasSupplyType a owl:ObjectProperty ; rdfs:domain gst:Business ; rdfs:range gst:Supply ;
+    rdfs:label "hasSupplyType"@en .
+gst:hasGSTRate a owl:ObjectProperty ; rdfs:domain gst:Supply ; rdfs:range gst:LevyMechanism ;
+    rdfs:label "hasGSTRate"@en .
+gst:hasInvoice a owl:ObjectProperty ; rdfs:domain gst:Supply ; rdfs:range gst:Document ;
+    rdfs:label "hasInvoice"@en .
+gst:hasNotification a owl:ObjectProperty ; rdfs:domain gst:LegalReference ; rdfs:range gst:Notification ;
+    rdfs:label "hasNotification"@en .
+gst:hasCircular a owl:ObjectProperty ; rdfs:domain gst:LegalReference ; rdfs:range gst:Circular ;
+    rdfs:label "hasCircular"@en .
+gst:hasThreshold a owl:ObjectProperty ; rdfs:domain gst:GSTEntity ; rdfs:range gst:Threshold ;
+    rdfs:label "hasThreshold"@en .
+gst:hasChapter a owl:ObjectProperty ; rdfs:domain gst:Act ; rdfs:range gst:Chapter ;
+    rdfs:label "hasChapter"@en .
+gst:hasSection a owl:ObjectProperty ; rdfs:domain gst:Chapter ; rdfs:range gst:Section ;
+    rdfs:label "hasSection"@en .
+gst:partOfAct a owl:ObjectProperty ; owl:inverseOf gst:hasChapter ; rdfs:domain gst:Chapter ; rdfs:range gst:Act ;
+    rdfs:label "partOfAct"@en .
+gst:belongsToInstrument a owl:ObjectProperty ; rdfs:domain gst:LegalReference ; rdfs:range gst:LegalReference ;
+    rdfs:label "belongsToInstrument"@en ;
+    rdfs:comment "Generic 'belongs to this Act/instrument' link for Rules, Schedules and Rule individuals (deliberately NOT the inverse of hasChapter, to avoid forcing Chapter-typing on non-Chapter LegalReference individuals)."@en .
+gst:partOfChapter a owl:ObjectProperty ; owl:inverseOf gst:hasSection ; rdfs:domain gst:Section ; rdfs:range gst:Chapter ;
+    rdfs:label "partOfChapter"@en .
+gst:amendedBy a owl:ObjectProperty ; rdfs:domain gst:Section ; rdfs:range gst:Notification ;
+    rdfs:label "amendedBy"@en .
+gst:issuedUnderSection a owl:ObjectProperty ; rdfs:domain gst:Notification ; rdfs:range gst:Section ;
+    rdfs:label "issuedUnderSection"@en .
+gst:filedBy a owl:ObjectProperty ; rdfs:domain gst:Return ; rdfs:range gst:RegisteredPerson ;
+    rdfs:label "filedBy"@en .
+gst:appliesToBusinessType a owl:ObjectProperty ; rdfs:domain gst:LegalReference ; rdfs:range gst:BusinessType ;
+    rdfs:label "appliesToBusinessType"@en .
+gst:hasBlockedCredit a owl:ObjectProperty ; rdfs:domain gst:RegisteredPerson ; rdfs:range gst:BlockedCredit ;
+    rdfs:label "hasBlockedCredit"@en .
+gst:satisfiesITCCondition a owl:ObjectProperty ; rdfs:domain gst:InputTaxCredit ; rdfs:range gst:ITCEligibilityCondition ;
+    rdfs:label "satisfiesITCCondition"@en .
+gst:hasAdjudicatingAuthority a owl:ObjectProperty ; rdfs:domain gst:DemandAndRecovery ; rdfs:range gst:AdjudicatingAuthority ;
+    rdfs:label "hasAdjudicatingAuthority"@en .
+gst:hasAppellateAuthority a owl:ObjectProperty ; rdfs:domain gst:Appeal ; rdfs:range gst:AppellateAuthority ;
+    rdfs:label "hasAppellateAuthority"@en .
+gst:leviedUnder a owl:ObjectProperty ; rdfs:domain gst:Tax ; rdfs:range gst:Section ;
+    rdfs:label "leviedUnder"@en .
+gst:hasLevyMechanism a owl:ObjectProperty ; rdfs:domain gst:Supply ; rdfs:range gst:LevyMechanism ;
+    rdfs:label "hasLevyMechanism"@en .
+
+#################################################################
+#  DATA PROPERTIES
+#################################################################
+
+gst:turnoverAmount a owl:DatatypeProperty ; rdfs:domain gst:Business ; rdfs:range xsd:decimal ;
+    rdfs:label "turnoverAmount"@en ; rdfs:comment "Aggregate turnover in INR, per Sec 2(6) CGST Act (PAN-based, all-India, includes exempt/export/inter-State supplies, excludes inward-RCM value and taxes)."@en .
+gst:gstRate a owl:DatatypeProperty ; rdfs:domain gst:LevyMechanism ; rdfs:range xsd:decimal ;
+    rdfs:label "gstRate"@en ; rdfs:comment "Percentage tax rate (e.g. composition rate) as fixed in the statute/notification."@en .
+gst:registrationDate a owl:DatatypeProperty ; rdfs:domain gst:GSTRegistration ; rdfs:range xsd:dateTime ;
+    rdfs:label "registrationDate"@en .
+gst:effectiveDate a owl:DatatypeProperty ; rdfs:domain gst:GSTEntity ; rdfs:range xsd:dateTime ;
+    rdfs:label "effectiveDate"@en .
+gst:interestRate a owl:DatatypeProperty ; rdfs:domain gst:Interest ; rdfs:range xsd:decimal ;
+    rdfs:label "interestRate"@en .
+gst:penaltyAmount a owl:DatatypeProperty ; rdfs:domain gst:Penalty ; rdfs:range xsd:decimal ;
+    rdfs:label "penaltyAmount"@en .
+gst:penaltyPercentage a owl:DatatypeProperty ; rdfs:domain gst:Penalty ; rdfs:range xsd:decimal ;
+    rdfs:label "penaltyPercentage"@en .
+gst:financialYear a owl:DatatypeProperty ; rdfs:domain gst:GSTEntity ; rdfs:range xsd:string ;
+    rdfs:label "financialYear"@en ; rdfs:comment "e.g. '2025-26'."@en .
+gst:gstin a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain gst:GSTRegistration ; rdfs:range xsd:string ;
+    rdfs:label "gstin"@en ; rdfs:comment "15-character GST Identification Number."@en .
+gst:pan a owl:DatatypeProperty ; rdfs:domain gst:Business ; rdfs:range xsd:string ; rdfs:label "PAN"@en .
+gst:aadhaar a owl:DatatypeProperty ; rdfs:domain gst:Individual ; rdfs:range xsd:string ; rdfs:label "Aadhaar"@en .
+gst:invoiceValue a owl:DatatypeProperty ; rdfs:domain gst:TaxInvoice ; rdfs:range xsd:decimal ; rdfs:label "invoiceValue"@en .
+gst:taxAmount a owl:DatatypeProperty ; rdfs:domain gst:Document ; rdfs:range xsd:decimal ; rdfs:label "taxAmount"@en .
+gst:invoiceNumber a owl:DatatypeProperty ; rdfs:domain gst:Document ; rdfs:range xsd:string ; rdfs:label "invoiceNumber"@en .
+gst:invoiceDate a owl:DatatypeProperty ; rdfs:domain gst:Document ; rdfs:range xsd:dateTime ; rdfs:label "invoiceDate"@en .
+gst:irn a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain gst:EInvoice ; rdfs:range xsd:string ;
+    rdfs:label "irn"@en ; rdfs:comment "Invoice Reference Number issued by the Invoice Registration Portal."@en .
+gst:dueDate a owl:DatatypeProperty ; rdfs:domain gst:Return ; rdfs:range xsd:dateTime ; rdfs:label "dueDate"@en .
+gst:filingDate a owl:DatatypeProperty ; rdfs:domain gst:Return ; rdfs:range xsd:dateTime ; rdfs:label "filingDate"@en .
+gst:lateFeeAmount a owl:DatatypeProperty ; rdfs:domain gst:LateFee ; rdfs:range xsd:decimal ; rdfs:label "lateFeeAmount"@en .
+gst:appealLimitationDays a owl:DatatypeProperty ; rdfs:domain gst:Appeal ; rdfs:range xsd:integer ; rdfs:label "appealLimitationDays"@en .
+gst:preDepositPercentage a owl:DatatypeProperty ; rdfs:domain gst:Appeal ; rdfs:range xsd:decimal ; rdfs:label "preDepositPercentage"@en .
+gst:refundTimeLimitYears a owl:DatatypeProperty ; rdfs:domain gst:Refund ; rdfs:range xsd:integer ; rdfs:label "refundTimeLimitYears"@en .
+gst:refundProcessingDays a owl:DatatypeProperty ; rdfs:domain gst:Refund ; rdfs:range xsd:integer ; rdfs:label "refundProcessingDays"@en .
+gst:sectionNumber a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain gst:Section ; rdfs:range xsd:string ; rdfs:label "sectionNumber"@en .
+gst:sectionTitle a owl:DatatypeProperty ; rdfs:domain gst:Section ; rdfs:range xsd:string ; rdfs:label "sectionTitle"@en .
+gst:chapterNumber a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain gst:Chapter ; rdfs:range xsd:string ; rdfs:label "chapterNumber"@en .
+gst:chapterTitle a owl:DatatypeProperty ; rdfs:domain gst:Chapter ; rdfs:range xsd:string ; rdfs:label "chapterTitle"@en .
+gst:notificationNumber a owl:DatatypeProperty ; rdfs:domain gst:Notification ; rdfs:range xsd:string ; rdfs:label "notificationNumber"@en .
+gst:notificationDate a owl:DatatypeProperty ; rdfs:domain gst:Notification ; rdfs:range xsd:dateTime ; rdfs:label "notificationDate"@en .
+gst:circularNumber a owl:DatatypeProperty ; rdfs:domain gst:Circular ; rdfs:range xsd:string ; rdfs:label "circularNumber"@en .
+gst:circularDate a owl:DatatypeProperty ; rdfs:domain gst:Circular ; rdfs:range xsd:dateTime ; rdfs:label "circularDate"@en .
+gst:thresholdAmount a owl:DatatypeProperty ; rdfs:domain gst:Threshold ; rdfs:range xsd:decimal ; rdfs:label "thresholdAmount"@en .
+gst:thresholdCurrency a owl:DatatypeProperty ; rdfs:domain gst:Threshold ; rdfs:range xsd:string ; rdfs:label "thresholdCurrency"@en .
+gst:legalCitationText a owl:DatatypeProperty ; rdfs:domain gst:GSTEntity ; rdfs:range xsd:string ;
+    rdfs:label "legalCitationText"@en ; rdfs:comment "Datatype-property mirror of gst:legalCitation, provided for direct OWLAPI/programmatic extraction without needing annotation-property traversal."@en .
+gst:isSpecialCategory a owl:DatatypeProperty, owl:FunctionalProperty ; rdfs:domain gst:State ; rdfs:range xsd:boolean ;
+    rdfs:label "isSpecialCategory"@en .
+
+#################################################################
+#  RESTRICTIONS
+#################################################################
+
+gst:Business rdfs:subClassOf
+    [ a owl:Restriction ; owl:onProperty gst:belongsToState ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+    [ a owl:Restriction ; owl:onProperty gst:hasBusinessType ; owl:cardinality "1"^^xsd:nonNegativeInteger ] .
+
+gst:RegisteredPerson rdfs:subClassOf
+    [ a owl:Restriction ; owl:onProperty gst:hasRegistrationStatus ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+    [ a owl:Restriction ; owl:onProperty gst:hasGSTRegistration ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+    [ a owl:Restriction ; owl:onProperty gst:requiresReturn ; owl:minCardinality "0"^^xsd:nonNegativeInteger ] .
+
+gst:GSTRegistration rdfs:subClassOf
+    [ a owl:Restriction ; owl:onProperty gst:gstin ; owl:cardinality "1"^^xsd:nonNegativeInteger ] .
+
+gst:CompositionTaxpayer rdfs:subClassOf
+    [ a owl:Restriction ; owl:onProperty gst:isEligibleForComposition ; owl:someValuesFrom gst:CompositionLevy ] ,
+    [ a owl:Restriction ; owl:onProperty gst:turnoverAmount ; owl:someValuesFrom xsd:decimal ] .
+
+gst:MandatorilyRegisterableBusiness rdfs:subClassOf
+    [ a owl:Restriction ; owl:onProperty gst:hasThreshold ; owl:someValuesFrom gst:Threshold ] .
+
+gst:Section rdfs:subClassOf
+    [ a owl:Restriction ; owl:onProperty gst:sectionNumber ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+    [ a owl:Restriction ; owl:onProperty gst:partOfChapter ; owl:maxCardinality "1"^^xsd:nonNegativeInteger ] .
+
+gst:Chapter rdfs:subClassOf
+    [ a owl:Restriction ; owl:onProperty gst:chapterNumber ; owl:cardinality "1"^^xsd:nonNegativeInteger ] ,
+    [ a owl:Restriction ; owl:onProperty gst:partOfAct ; owl:cardinality "1"^^xsd:nonNegativeInteger ] .
+
+#################################################################
+#  INDIVIDUALS: ACTS, CHAPTERS AND SECTIONS
+#  (Structure per source manual's INDEX pages; section numbers,
+#   titles and chapter groupings preserved verbatim from the
+#   statutory table of contents.)
+#################################################################
+
+gst:CGSTAct2017 a owl:NamedIndividual, gst:Act ;
+    rdfs:label "Central Goods and Services Tax Act, 2017 (No. 12 of 2017)"@en .
+
+gst:CGST_ChapterI a owl:NamedIndividual, gst:Chapter ;
+    gst:chapterNumber "I" ; gst:chapterTitle "Preliminary" ;
+    gst:partOfAct gst:CGSTAct2017 ; rdfs:label "Chapter I - Preliminary"@en .
+gst:CGST_Section1 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "1" ; gst:sectionTitle "Short title, extent and commencement" ;
+    gst:partOfChapter gst:CGST_ChapterI ; rdfs:label "Sec 1 CGST_ - Short title, extent and commencement"@en .
+gst:CGST_Section2 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "2" ; gst:sectionTitle "Definitions" ;
+    gst:partOfChapter gst:CGST_ChapterI ; rdfs:label "Sec 2 CGST_ - Definitions"@en .
+
+gst:CGST_ChapterII a owl:NamedIndividual, gst:Chapter ;
+    gst:chapterNumber "II" ; gst:chapterTitle "Administration" ;
+    gst:partOfAct gst:CGSTAct2017 ; rdfs:label "Chapter II - Administration"@en .
+gst:CGST_Section3 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "3" ; gst:sectionTitle "Officers under this Act" ;
+    gst:partOfChapter gst:CGST_ChapterII ; rdfs:label "Sec 3 CGST_ - Officers under this Act"@en .
+gst:CGST_Section4 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "4" ; gst:sectionTitle "Appointment of officers" ;
+    gst:partOfChapter gst:CGST_ChapterII ; rdfs:label "Sec 4 CGST_ - Appointment of officers"@en .
+gst:CGST_Section5 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "5" ; gst:sectionTitle "Powers of officers" ;
+    gst:partOfChapter gst:CGST_ChapterII ; rdfs:label "Sec 5 CGST_ - Powers of officers"@en .
+gst:CGST_Section6 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "6" ; gst:sectionTitle "Authorisation of officers of State tax or Union territory tax as proper officer in certain circumstances" ;
+    gst:partOfChapter gst:CGST_ChapterII ; rdfs:label "Sec 6 CGST_ - Authorisation of officers of State tax or Union territory tax as proper officer in certain circumstances"@en .
+
+gst:CGST_ChapterIII a owl:NamedIndividual, gst:Chapter ;
+    gst:chapterNumber "III" ; gst:chapterTitle "Levy and Collection of Tax" ;
+    gst:partOfAct gst:CGSTAct2017 ; rdfs:label "Chapter III - Levy and Collection of Tax"@en .
+gst:CGST_Section7 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "7" ; gst:sectionTitle "Scope of supply" ;
+    gst:partOfChapter gst:CGST_ChapterIII ; rdfs:label "Sec 7 CGST_ - Scope of supply"@en .
+gst:CGST_Section8 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "8" ; gst:sectionTitle "Tax liability on composite and mixed supplies" ;
+    gst:partOfChapter gst:CGST_ChapterIII ; rdfs:label "Sec 8 CGST_ - Tax liability on composite and mixed supplies"@en .
+gst:CGST_Section9 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "9" ; gst:sectionTitle "Levy and collection" ;
+    gst:partOfChapter gst:CGST_ChapterIII ; rdfs:label "Sec 9 CGST_ - Levy and collection"@en .
+gst:CGST_Section10 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "10" ; gst:sectionTitle "Composition levy" ;
+    gst:partOfChapter gst:CGST_ChapterIII ; rdfs:label "Sec 10 CGST_ - Composition levy"@en .
+gst:CGST_Section11 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "11" ; gst:sectionTitle "Power to grant exemption from tax" ;
+    gst:partOfChapter gst:CGST_ChapterIII ; rdfs:label "Sec 11 CGST_ - Power to grant exemption from tax"@en .
+gst:CGST_Section11A a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "11A" ; gst:sectionTitle "Power not to recover Goods and Services Tax not levied or short-levied as a result of general practice" ;
+    gst:partOfChapter gst:CGST_ChapterIII ; rdfs:label "Sec 11A CGST_ - Power not to recover Goods and Services Tax not levied or short-levied as a result of general practice"@en .
+
+gst:CGST_ChapterIV a owl:NamedIndividual, gst:Chapter ;
+    gst:chapterNumber "IV" ; gst:chapterTitle "Time and Value of Supply" ;
+    gst:partOfAct gst:CGSTAct2017 ; rdfs:label "Chapter IV - Time and Value of Supply"@en .
+gst:CGST_Section12 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "12" ; gst:sectionTitle "Time of supply of goods" ;
+    gst:partOfChapter gst:CGST_ChapterIV ; rdfs:label "Sec 12 CGST_ - Time of supply of goods"@en .
+gst:CGST_Section13 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "13" ; gst:sectionTitle "Time of supply of services" ;
+    gst:partOfChapter gst:CGST_ChapterIV ; rdfs:label "Sec 13 CGST_ - Time of supply of services"@en .
+gst:CGST_Section14 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "14" ; gst:sectionTitle "Change in rate of tax in respect of supply of goods or services" ;
+    gst:partOfChapter gst:CGST_ChapterIV ; rdfs:label "Sec 14 CGST_ - Change in rate of tax in respect of supply of goods or services"@en .
+gst:CGST_Section15 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "15" ; gst:sectionTitle "Value of taxable supply" ;
+    gst:partOfChapter gst:CGST_ChapterIV ; rdfs:label "Sec 15 CGST_ - Value of taxable supply"@en .
+
+gst:CGST_ChapterV a owl:NamedIndividual, gst:Chapter ;
+    gst:chapterNumber "V" ; gst:chapterTitle "Input Tax Credit" ;
+    gst:partOfAct gst:CGSTAct2017 ; rdfs:label "Chapter V - Input Tax Credit"@en .
+gst:CGST_Section16 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "16" ; gst:sectionTitle "Eligibility and conditions for taking input tax credit" ;
+    gst:partOfChapter gst:CGST_ChapterV ; rdfs:label "Sec 16 CGST_ - Eligibility and conditions for taking input tax credit"@en .
+gst:CGST_Section17 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "17" ; gst:sectionTitle "Apportionment of credit and blocked credits" ;
+    gst:partOfChapter gst:CGST_ChapterV ; rdfs:label "Sec 17 CGST_ - Apportionment of credit and blocked credits"@en .
+gst:CGST_Section18 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "18" ; gst:sectionTitle "Availability of credit in special circumstances" ;
+    gst:partOfChapter gst:CGST_ChapterV ; rdfs:label "Sec 18 CGST_ - Availability of credit in special circumstances"@en .
+gst:CGST_Section19 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "19" ; gst:sectionTitle "Taking input tax credit in respect of inputs and capital goods sent for job work" ;
+    gst:partOfChapter gst:CGST_ChapterV ; rdfs:label "Sec 19 CGST_ - Taking input tax credit in respect of inputs and capital goods sent for job work"@en .
+gst:CGST_Section20 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "20" ; gst:sectionTitle "Manner of distribution of credit by Input Service Distributor" ;
+    gst:partOfChapter gst:CGST_ChapterV ; rdfs:label "Sec 20 CGST_ - Manner of distribution of credit by Input Service Distributor"@en .
+gst:CGST_Section21 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "21" ; gst:sectionTitle "Manner of recovery of credit distributed in excess" ;
+    gst:partOfChapter gst:CGST_ChapterV ; rdfs:label "Sec 21 CGST_ - Manner of recovery of credit distributed in excess"@en .
+
+gst:CGST_ChapterVI a owl:NamedIndividual, gst:Chapter ;
+    gst:chapterNumber "VI" ; gst:chapterTitle "Registration" ;
+    gst:partOfAct gst:CGSTAct2017 ; rdfs:label "Chapter VI - Registration"@en .
+gst:CGST_Section22 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "22" ; gst:sectionTitle "Persons liable for registration" ;
+    gst:partOfChapter gst:CGST_ChapterVI ; rdfs:label "Sec 22 CGST_ - Persons liable for registration"@en .
+gst:CGST_Section23 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "23" ; gst:sectionTitle "Persons not liable for registration" ;
+    gst:partOfChapter gst:CGST_ChapterVI ; rdfs:label "Sec 23 CGST_ - Persons not liable for registration"@en .
+gst:CGST_Section24 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "24" ; gst:sectionTitle "Compulsory registration in certain cases" ;
+    gst:partOfChapter gst:CGST_ChapterVI ; rdfs:label "Sec 24 CGST_ - Compulsory registration in certain cases"@en .
+gst:CGST_Section25 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "25" ; gst:sectionTitle "Procedure for registration" ;
+    gst:partOfChapter gst:CGST_ChapterVI ; rdfs:label "Sec 25 CGST_ - Procedure for registration"@en .
+gst:CGST_Section26 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "26" ; gst:sectionTitle "Deemed registration" ;
+    gst:partOfChapter gst:CGST_ChapterVI ; rdfs:label "Sec 26 CGST_ - Deemed registration"@en .
+gst:CGST_Section27 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "27" ; gst:sectionTitle "Special provisions relating to casual taxable person and non-resident taxable person" ;
+    gst:partOfChapter gst:CGST_ChapterVI ; rdfs:label "Sec 27 CGST_ - Special provisions relating to casual taxable person and non-resident taxable person"@en .
+gst:CGST_Section28 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "28" ; gst:sectionTitle "Amendment of registration" ;
+    gst:partOfChapter gst:CGST_ChapterVI ; rdfs:label "Sec 28 CGST_ - Amendment of registration"@en .
+gst:CGST_Section29 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "29" ; gst:sectionTitle "Cancellation or suspension of registration" ;
+    gst:partOfChapter gst:CGST_ChapterVI ; rdfs:label "Sec 29 CGST_ - Cancellation or suspension of registration"@en .
+gst:CGST_Section30 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "30" ; gst:sectionTitle "Revocation of cancellation of registration" ;
+    gst:partOfChapter gst:CGST_ChapterVI ; rdfs:label "Sec 30 CGST_ - Revocation of cancellation of registration"@en .
+
+gst:CGST_ChapterVII a owl:NamedIndividual, gst:Chapter ;
+    gst:chapterNumber "VII" ; gst:chapterTitle "Tax Invoice, Credit and Debit Notes" ;
+    gst:partOfAct gst:CGSTAct2017 ; rdfs:label "Chapter VII - Tax Invoice, Credit and Debit Notes"@en .
+gst:CGST_Section31 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "31" ; gst:sectionTitle "Tax invoice" ;
+    gst:partOfChapter gst:CGST_ChapterVII ; rdfs:label "Sec 31 CGST_ - Tax invoice"@en .
+gst:CGST_Section31A a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "31A" ; gst:sectionTitle "Facility of digital payment to recipient" ;
+    gst:partOfChapter gst:CGST_ChapterVII ; rdfs:label "Sec 31A CGST_ - Facility of digital payment to recipient"@en .
+gst:CGST_Section32 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "32" ; gst:sectionTitle "Prohibition of unauthorised collection of tax" ;
+    gst:partOfChapter gst:CGST_ChapterVII ; rdfs:label "Sec 32 CGST_ - Prohibition of unauthorised collection of tax"@en .
+gst:CGST_Section33 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "33" ; gst:sectionTitle "Amount of tax to be indicated in tax invoice and other documents" ;
+    gst:partOfChapter gst:CGST_ChapterVII ; rdfs:label "Sec 33 CGST_ - Amount of tax to be indicated in tax invoice and other documents"@en .
+gst:CGST_Section34 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "34" ; gst:sectionTitle "Credit and debit notes" ;
+    gst:partOfChapter gst:CGST_ChapterVII ; rdfs:label "Sec 34 CGST_ - Credit and debit notes"@en .
+
+gst:CGST_ChapterVIII a owl:NamedIndividual, gst:Chapter ;
+    gst:chapterNumber "VIII" ; gst:chapterTitle "Accounts and Records" ;
+    gst:partOfAct gst:CGSTAct2017 ; rdfs:label "Chapter VIII - Accounts and Records"@en .
+gst:CGST_Section35 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "35" ; gst:sectionTitle "Accounts and other records" ;
+    gst:partOfChapter gst:CGST_ChapterVIII ; rdfs:label "Sec 35 CGST_ - Accounts and other records"@en .
+gst:CGST_Section36 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "36" ; gst:sectionTitle "Period of retention of account" ;
+    gst:partOfChapter gst:CGST_ChapterVIII ; rdfs:label "Sec 36 CGST_ - Period of retention of account"@en .
+
+gst:CGST_ChapterIX a owl:NamedIndividual, gst:Chapter ;
+    gst:chapterNumber "IX" ; gst:chapterTitle "Returns" ;
+    gst:partOfAct gst:CGSTAct2017 ; rdfs:label "Chapter IX - Returns"@en .
+gst:CGST_Section37 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "37" ; gst:sectionTitle "Furnishing details of outward supplies" ;
+    gst:partOfChapter gst:CGST_ChapterIX ; rdfs:label "Sec 37 CGST_ - Furnishing details of outward supplies"@en .
+gst:CGST_Section38 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "38" ; gst:sectionTitle "Communication of details of inward supplies and input tax credit" ;
+    gst:partOfChapter gst:CGST_ChapterIX ; rdfs:label "Sec 38 CGST_ - Communication of details of inward supplies and input tax credit"@en .
+gst:CGST_Section39 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "39" ; gst:sectionTitle "Furnishing of returns" ;
+    gst:partOfChapter gst:CGST_ChapterIX ; rdfs:label "Sec 39 CGST_ - Furnishing of returns"@en .
+gst:CGST_Section40 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "40" ; gst:sectionTitle "First return" ;
+    gst:partOfChapter gst:CGST_ChapterIX ; rdfs:label "Sec 40 CGST_ - First return"@en .
+gst:CGST_Section41 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "41" ; gst:sectionTitle "Availment of Input tax credit" ;
+    gst:partOfChapter gst:CGST_ChapterIX ; rdfs:label "Sec 41 CGST_ - Availment of Input tax credit"@en .
+gst:CGST_Section44 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "44" ; gst:sectionTitle "Annual return" ;
+    gst:partOfChapter gst:CGST_ChapterIX ; rdfs:label "Sec 44 CGST_ - Annual return"@en .
+gst:CGST_Section45 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "45" ; gst:sectionTitle "Final return" ;
+    gst:partOfChapter gst:CGST_ChapterIX ; rdfs:label "Sec 45 CGST_ - Final return"@en .
+gst:CGST_Section46 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "46" ; gst:sectionTitle "Notice to return defaulters" ;
+    gst:partOfChapter gst:CGST_ChapterIX ; rdfs:label "Sec 46 CGST_ - Notice to return defaulters"@en .
+gst:CGST_Section47 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "47" ; gst:sectionTitle "Levy of late fee" ;
+    gst:partOfChapter gst:CGST_ChapterIX ; rdfs:label "Sec 47 CGST_ - Levy of late fee"@en .
+gst:CGST_Section48 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "48" ; gst:sectionTitle "Goods and Services Tax practitioners" ;
+    gst:partOfChapter gst:CGST_ChapterIX ; rdfs:label "Sec 48 CGST_ - Goods and Services Tax practitioners"@en .
+
+gst:CGST_ChapterX a owl:NamedIndividual, gst:Chapter ;
+    gst:chapterNumber "X" ; gst:chapterTitle "Payment of Tax" ;
+    gst:partOfAct gst:CGSTAct2017 ; rdfs:label "Chapter X - Payment of Tax"@en .
+gst:CGST_Section49 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "49" ; gst:sectionTitle "Payment of tax, interest, penalty and other amounts" ;
+    gst:partOfChapter gst:CGST_ChapterX ; rdfs:label "Sec 49 CGST_ - Payment of tax, interest, penalty and other amounts"@en .
+gst:CGST_Section49A a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "49A" ; gst:sectionTitle "Utilisation of input tax credit subject to certain conditions" ;
+    gst:partOfChapter gst:CGST_ChapterX ; rdfs:label "Sec 49A CGST_ - Utilisation of input tax credit subject to certain conditions"@en .
+gst:CGST_Section49B a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "49B" ; gst:sectionTitle "Order of utilisation of input tax credit" ;
+    gst:partOfChapter gst:CGST_ChapterX ; rdfs:label "Sec 49B CGST_ - Order of utilisation of input tax credit"@en .
+gst:CGST_Section50 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "50" ; gst:sectionTitle "Interest on delayed payment of tax" ;
+    gst:partOfChapter gst:CGST_ChapterX ; rdfs:label "Sec 50 CGST_ - Interest on delayed payment of tax"@en .
+gst:CGST_Section51 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "51" ; gst:sectionTitle "Tax deduction at source" ;
+    gst:partOfChapter gst:CGST_ChapterX ; rdfs:label "Sec 51 CGST_ - Tax deduction at source"@en .
+gst:CGST_Section52 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "52" ; gst:sectionTitle "Collection of tax at source" ;
+    gst:partOfChapter gst:CGST_ChapterX ; rdfs:label "Sec 52 CGST_ - Collection of tax at source"@en .
+gst:CGST_Section53 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "53" ; gst:sectionTitle "Transfer of input tax credit" ;
+    gst:partOfChapter gst:CGST_ChapterX ; rdfs:label "Sec 53 CGST_ - Transfer of input tax credit"@en .
+gst:CGST_Section53A a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "53A" ; gst:sectionTitle "Transfer of certain amounts" ;
+    gst:partOfChapter gst:CGST_ChapterX ; rdfs:label "Sec 53A CGST_ - Transfer of certain amounts"@en .
+
+gst:CGST_ChapterXI a owl:NamedIndividual, gst:Chapter ;
+    gst:chapterNumber "XI" ; gst:chapterTitle "Refunds" ;
+    gst:partOfAct gst:CGSTAct2017 ; rdfs:label "Chapter XI - Refunds"@en .
+gst:CGST_Section54 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "54" ; gst:sectionTitle "Refund of tax" ;
+    gst:partOfChapter gst:CGST_ChapterXI ; rdfs:label "Sec 54 CGST_ - Refund of tax"@en .
+gst:CGST_Section55 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "55" ; gst:sectionTitle "Refund in certain cases" ;
+    gst:partOfChapter gst:CGST_ChapterXI ; rdfs:label "Sec 55 CGST_ - Refund in certain cases"@en .
+gst:CGST_Section56 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "56" ; gst:sectionTitle "Interest on delayed refunds" ;
+    gst:partOfChapter gst:CGST_ChapterXI ; rdfs:label "Sec 56 CGST_ - Interest on delayed refunds"@en .
+gst:CGST_Section57 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "57" ; gst:sectionTitle "Consumer Welfare Fund" ;
+    gst:partOfChapter gst:CGST_ChapterXI ; rdfs:label "Sec 57 CGST_ - Consumer Welfare Fund"@en .
+gst:CGST_Section58 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "58" ; gst:sectionTitle "Utilisation of Fund" ;
+    gst:partOfChapter gst:CGST_ChapterXI ; rdfs:label "Sec 58 CGST_ - Utilisation of Fund"@en .
+
+gst:CGST_ChapterXII a owl:NamedIndividual, gst:Chapter ;
+    gst:chapterNumber "XII" ; gst:chapterTitle "Assessment" ;
+    gst:partOfAct gst:CGSTAct2017 ; rdfs:label "Chapter XII - Assessment"@en .
+gst:CGST_Section59 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "59" ; gst:sectionTitle "Self-assessment" ;
+    gst:partOfChapter gst:CGST_ChapterXII ; rdfs:label "Sec 59 CGST_ - Self-assessment"@en .
+gst:CGST_Section60 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "60" ; gst:sectionTitle "Provisional assessment" ;
+    gst:partOfChapter gst:CGST_ChapterXII ; rdfs:label "Sec 60 CGST_ - Provisional assessment"@en .
+gst:CGST_Section61 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "61" ; gst:sectionTitle "Scrutiny of returns" ;
+    gst:partOfChapter gst:CGST_ChapterXII ; rdfs:label "Sec 61 CGST_ - Scrutiny of returns"@en .
+gst:CGST_Section62 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "62" ; gst:sectionTitle "Assessment of non-filers of returns" ;
+    gst:partOfChapter gst:CGST_ChapterXII ; rdfs:label "Sec 62 CGST_ - Assessment of non-filers of returns"@en .
+gst:CGST_Section63 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "63" ; gst:sectionTitle "Assessment of unregistered persons" ;
+    gst:partOfChapter gst:CGST_ChapterXII ; rdfs:label "Sec 63 CGST_ - Assessment of unregistered persons"@en .
+gst:CGST_Section64 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "64" ; gst:sectionTitle "Summary assessment in certain special cases" ;
+    gst:partOfChapter gst:CGST_ChapterXII ; rdfs:label "Sec 64 CGST_ - Summary assessment in certain special cases"@en .
+
+gst:CGST_ChapterXIII a owl:NamedIndividual, gst:Chapter ;
+    gst:chapterNumber "XIII" ; gst:chapterTitle "Audit" ;
+    gst:partOfAct gst:CGSTAct2017 ; rdfs:label "Chapter XIII - Audit"@en .
+gst:CGST_Section65 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "65" ; gst:sectionTitle "Audit by tax authorities" ;
+    gst:partOfChapter gst:CGST_ChapterXIII ; rdfs:label "Sec 65 CGST_ - Audit by tax authorities"@en .
+gst:CGST_Section66 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "66" ; gst:sectionTitle "Special audit" ;
+    gst:partOfChapter gst:CGST_ChapterXIII ; rdfs:label "Sec 66 CGST_ - Special audit"@en .
+
+gst:CGST_ChapterXIV a owl:NamedIndividual, gst:Chapter ;
+    gst:chapterNumber "XIV" ; gst:chapterTitle "Inspection, Search, Seizure and Arrest" ;
+    gst:partOfAct gst:CGSTAct2017 ; rdfs:label "Chapter XIV - Inspection, Search, Seizure and Arrest"@en .
+gst:CGST_Section67 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "67" ; gst:sectionTitle "Power of inspection, search and seizure" ;
+    gst:partOfChapter gst:CGST_ChapterXIV ; rdfs:label "Sec 67 CGST_ - Power of inspection, search and seizure"@en .
+gst:CGST_Section68 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "68" ; gst:sectionTitle "Inspection of goods in movement" ;
+    gst:partOfChapter gst:CGST_ChapterXIV ; rdfs:label "Sec 68 CGST_ - Inspection of goods in movement"@en .
+gst:CGST_Section69 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "69" ; gst:sectionTitle "Power to arrest" ;
+    gst:partOfChapter gst:CGST_ChapterXIV ; rdfs:label "Sec 69 CGST_ - Power to arrest"@en .
+gst:CGST_Section70 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "70" ; gst:sectionTitle "Power to summon persons to give evidence and produce documents" ;
+    gst:partOfChapter gst:CGST_ChapterXIV ; rdfs:label "Sec 70 CGST_ - Power to summon persons to give evidence and produce documents"@en .
+gst:CGST_Section71 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "71" ; gst:sectionTitle "Access to business premises" ;
+    gst:partOfChapter gst:CGST_ChapterXIV ; rdfs:label "Sec 71 CGST_ - Access to business premises"@en .
+gst:CGST_Section72 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "72" ; gst:sectionTitle "Officers to assist proper officers" ;
+    gst:partOfChapter gst:CGST_ChapterXIV ; rdfs:label "Sec 72 CGST_ - Officers to assist proper officers"@en .
+
+gst:CGST_ChapterXV a owl:NamedIndividual, gst:Chapter ;
+    gst:chapterNumber "XV" ; gst:chapterTitle "Demands and Recovery" ;
+    gst:partOfAct gst:CGSTAct2017 ; rdfs:label "Chapter XV - Demands and Recovery"@en .
+gst:CGST_Section73 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "73" ; gst:sectionTitle "Determination of tax, pertaining to period up to FY 2023-24, not paid/short paid or ITC wrongly availed/utilised, for reasons other than fraud" ;
+    gst:partOfChapter gst:CGST_ChapterXV ; rdfs:label "Sec 73 CGST_ - Determination of tax, pertaining to period up to FY 2023-24, not paid/short paid or ITC wrongly availed/utilised, for reasons other than fraud"@en .
+gst:CGST_Section74 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "74" ; gst:sectionTitle "Determination of tax, pertaining to period up to FY 2023-24, not paid/short paid or ITC wrongly availed/utilised, by reason of fraud" ;
+    gst:partOfChapter gst:CGST_ChapterXV ; rdfs:label "Sec 74 CGST_ - Determination of tax, pertaining to period up to FY 2023-24, not paid/short paid or ITC wrongly availed/utilised, by reason of fraud"@en .
+gst:CGST_Section74A a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "74A" ; gst:sectionTitle "Determination of tax not paid/short paid or ITC wrongly availed/utilised, pertaining to FY 2024-25 onwards" ;
+    gst:partOfChapter gst:CGST_ChapterXV ; rdfs:label "Sec 74A CGST_ - Determination of tax not paid/short paid or ITC wrongly availed/utilised, pertaining to FY 2024-25 onwards"@en .
+gst:CGST_Section75 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "75" ; gst:sectionTitle "General provisions relating to determination of tax" ;
+    gst:partOfChapter gst:CGST_ChapterXV ; rdfs:label "Sec 75 CGST_ - General provisions relating to determination of tax"@en .
+gst:CGST_Section76 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "76" ; gst:sectionTitle "Tax collected but not paid to Government" ;
+    gst:partOfChapter gst:CGST_ChapterXV ; rdfs:label "Sec 76 CGST_ - Tax collected but not paid to Government"@en .
+gst:CGST_Section77 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "77" ; gst:sectionTitle "Tax wrongfully collected and paid to Central Government or State Government" ;
+    gst:partOfChapter gst:CGST_ChapterXV ; rdfs:label "Sec 77 CGST_ - Tax wrongfully collected and paid to Central Government or State Government"@en .
+gst:CGST_Section78 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "78" ; gst:sectionTitle "Initiation of recovery proceedings" ;
+    gst:partOfChapter gst:CGST_ChapterXV ; rdfs:label "Sec 78 CGST_ - Initiation of recovery proceedings"@en .
+gst:CGST_Section79 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "79" ; gst:sectionTitle "Recovery of tax" ;
+    gst:partOfChapter gst:CGST_ChapterXV ; rdfs:label "Sec 79 CGST_ - Recovery of tax"@en .
+gst:CGST_Section80 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "80" ; gst:sectionTitle "Payment of tax and other amount in instalments" ;
+    gst:partOfChapter gst:CGST_ChapterXV ; rdfs:label "Sec 80 CGST_ - Payment of tax and other amount in instalments"@en .
+gst:CGST_Section81 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "81" ; gst:sectionTitle "Transfer of property to be void in certain cases" ;
+    gst:partOfChapter gst:CGST_ChapterXV ; rdfs:label "Sec 81 CGST_ - Transfer of property to be void in certain cases"@en .
+gst:CGST_Section82 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "82" ; gst:sectionTitle "Tax to be first charge on property" ;
+    gst:partOfChapter gst:CGST_ChapterXV ; rdfs:label "Sec 82 CGST_ - Tax to be first charge on property"@en .
+gst:CGST_Section83 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "83" ; gst:sectionTitle "Provisional attachment to protect revenue in certain cases" ;
+    gst:partOfChapter gst:CGST_ChapterXV ; rdfs:label "Sec 83 CGST_ - Provisional attachment to protect revenue in certain cases"@en .
+gst:CGST_Section84 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "84" ; gst:sectionTitle "Continuation and validation of certain recovery proceedings" ;
+    gst:partOfChapter gst:CGST_ChapterXV ; rdfs:label "Sec 84 CGST_ - Continuation and validation of certain recovery proceedings"@en .
+
+gst:CGST_ChapterXVI a owl:NamedIndividual, gst:Chapter ;
+    gst:chapterNumber "XVI" ; gst:chapterTitle "Liability to Pay in Certain Cases" ;
+    gst:partOfAct gst:CGSTAct2017 ; rdfs:label "Chapter XVI - Liability to Pay in Certain Cases"@en .
+gst:CGST_Section85 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "85" ; gst:sectionTitle "Liability in case of transfer of business" ;
+    gst:partOfChapter gst:CGST_ChapterXVI ; rdfs:label "Sec 85 CGST_ - Liability in case of transfer of business"@en .
+gst:CGST_Section86 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "86" ; gst:sectionTitle "Liability of agent and principal" ;
+    gst:partOfChapter gst:CGST_ChapterXVI ; rdfs:label "Sec 86 CGST_ - Liability of agent and principal"@en .
+gst:CGST_Section87 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "87" ; gst:sectionTitle "Liability in case of amalgamation or merger of companies" ;
+    gst:partOfChapter gst:CGST_ChapterXVI ; rdfs:label "Sec 87 CGST_ - Liability in case of amalgamation or merger of companies"@en .
+gst:CGST_Section88 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "88" ; gst:sectionTitle "Liability in case of company in liquidation" ;
+    gst:partOfChapter gst:CGST_ChapterXVI ; rdfs:label "Sec 88 CGST_ - Liability in case of company in liquidation"@en .
+gst:CGST_Section89 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "89" ; gst:sectionTitle "Liability of directors of private company" ;
+    gst:partOfChapter gst:CGST_ChapterXVI ; rdfs:label "Sec 89 CGST_ - Liability of directors of private company"@en .
+gst:CGST_Section90 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "90" ; gst:sectionTitle "Liability of partners of firm to pay tax" ;
+    gst:partOfChapter gst:CGST_ChapterXVI ; rdfs:label "Sec 90 CGST_ - Liability of partners of firm to pay tax"@en .
+gst:CGST_Section91 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "91" ; gst:sectionTitle "Liability of guardians, trustees, etc." ;
+    gst:partOfChapter gst:CGST_ChapterXVI ; rdfs:label "Sec 91 CGST_ - Liability of guardians, trustees, etc."@en .
+gst:CGST_Section92 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "92" ; gst:sectionTitle "Liability of Court of Wards, etc." ;
+    gst:partOfChapter gst:CGST_ChapterXVI ; rdfs:label "Sec 92 CGST_ - Liability of Court of Wards, etc."@en .
+gst:CGST_Section93 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "93" ; gst:sectionTitle "Special provisions regarding liability to pay tax, interest or penalty in certain cases" ;
+    gst:partOfChapter gst:CGST_ChapterXVI ; rdfs:label "Sec 93 CGST_ - Special provisions regarding liability to pay tax, interest or penalty in certain cases"@en .
+gst:CGST_Section94 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "94" ; gst:sectionTitle "Liability in other cases" ;
+    gst:partOfChapter gst:CGST_ChapterXVI ; rdfs:label "Sec 94 CGST_ - Liability in other cases"@en .
+
+gst:CGST_ChapterXVII a owl:NamedIndividual, gst:Chapter ;
+    gst:chapterNumber "XVII" ; gst:chapterTitle "Advance Ruling" ;
+    gst:partOfAct gst:CGSTAct2017 ; rdfs:label "Chapter XVII - Advance Ruling"@en .
+gst:CGST_Section95 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "95" ; gst:sectionTitle "Definitions" ;
+    gst:partOfChapter gst:CGST_ChapterXVII ; rdfs:label "Sec 95 CGST_ - Definitions"@en .
+gst:CGST_Section96 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "96" ; gst:sectionTitle "Authority for advance ruling" ;
+    gst:partOfChapter gst:CGST_ChapterXVII ; rdfs:label "Sec 96 CGST_ - Authority for advance ruling"@en .
+gst:CGST_Section97 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "97" ; gst:sectionTitle "Application for advance ruling" ;
+    gst:partOfChapter gst:CGST_ChapterXVII ; rdfs:label "Sec 97 CGST_ - Application for advance ruling"@en .
+gst:CGST_Section98 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "98" ; gst:sectionTitle "Procedure on receipt of application" ;
+    gst:partOfChapter gst:CGST_ChapterXVII ; rdfs:label "Sec 98 CGST_ - Procedure on receipt of application"@en .
+gst:CGST_Section99 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "99" ; gst:sectionTitle "Appellate authority for advance ruling" ;
+    gst:partOfChapter gst:CGST_ChapterXVII ; rdfs:label "Sec 99 CGST_ - Appellate authority for advance ruling"@en .
+gst:CGST_Section100 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "100" ; gst:sectionTitle "Appeal to appellate authority" ;
+    gst:partOfChapter gst:CGST_ChapterXVII ; rdfs:label "Sec 100 CGST_ - Appeal to appellate authority"@en .
+gst:CGST_Section101 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "101" ; gst:sectionTitle "Orders of appellate authority" ;
+    gst:partOfChapter gst:CGST_ChapterXVII ; rdfs:label "Sec 101 CGST_ - Orders of appellate authority"@en .
+gst:CGST_Section101A a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "101A" ; gst:sectionTitle "Constitution of National Appellate Authority for Advance Ruling" ;
+    gst:partOfChapter gst:CGST_ChapterXVII ; rdfs:label "Sec 101A CGST_ - Constitution of National Appellate Authority for Advance Ruling"@en .
+gst:CGST_Section101B a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "101B" ; gst:sectionTitle "Appeal to National Appellate Authority" ;
+    gst:partOfChapter gst:CGST_ChapterXVII ; rdfs:label "Sec 101B CGST_ - Appeal to National Appellate Authority"@en .
+gst:CGST_Section101C a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "101C" ; gst:sectionTitle "Order of National Appellate Authority" ;
+    gst:partOfChapter gst:CGST_ChapterXVII ; rdfs:label "Sec 101C CGST_ - Order of National Appellate Authority"@en .
+gst:CGST_Section102 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "102" ; gst:sectionTitle "Rectification of advance ruling" ;
+    gst:partOfChapter gst:CGST_ChapterXVII ; rdfs:label "Sec 102 CGST_ - Rectification of advance ruling"@en .
+gst:CGST_Section103 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "103" ; gst:sectionTitle "Applicability of advance ruling" ;
+    gst:partOfChapter gst:CGST_ChapterXVII ; rdfs:label "Sec 103 CGST_ - Applicability of advance ruling"@en .
+gst:CGST_Section104 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "104" ; gst:sectionTitle "Advance ruling to be void in certain circumstances" ;
+    gst:partOfChapter gst:CGST_ChapterXVII ; rdfs:label "Sec 104 CGST_ - Advance ruling to be void in certain circumstances"@en .
+gst:CGST_Section105 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "105" ; gst:sectionTitle "Powers of Authority and Appellate Authority" ;
+    gst:partOfChapter gst:CGST_ChapterXVII ; rdfs:label "Sec 105 CGST_ - Powers of Authority and Appellate Authority"@en .
+gst:CGST_Section106 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "106" ; gst:sectionTitle "Procedure of Authority and Appellate Authority" ;
+    gst:partOfChapter gst:CGST_ChapterXVII ; rdfs:label "Sec 106 CGST_ - Procedure of Authority and Appellate Authority"@en .
+
+gst:CGST_ChapterXVIII a owl:NamedIndividual, gst:Chapter ;
+    gst:chapterNumber "XVIII" ; gst:chapterTitle "Appeals and Revision" ;
+    gst:partOfAct gst:CGSTAct2017 ; rdfs:label "Chapter XVIII - Appeals and Revision"@en .
+gst:CGST_Section107 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "107" ; gst:sectionTitle "Appeals to appellate authority" ;
+    gst:partOfChapter gst:CGST_ChapterXVIII ; rdfs:label "Sec 107 CGST_ - Appeals to appellate authority"@en .
+gst:CGST_Section108 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "108" ; gst:sectionTitle "Powers of revisional authority" ;
+    gst:partOfChapter gst:CGST_ChapterXVIII ; rdfs:label "Sec 108 CGST_ - Powers of revisional authority"@en .
+gst:CGST_Section109 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "109" ; gst:sectionTitle "Constitution of Appellate Tribunal and benches thereof" ;
+    gst:partOfChapter gst:CGST_ChapterXVIII ; rdfs:label "Sec 109 CGST_ - Constitution of Appellate Tribunal and benches thereof"@en .
+gst:CGST_Section110 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "110" ; gst:sectionTitle "President and Members of Appellate Tribunal, their qualification, appointment, conditions of service, etc." ;
+    gst:partOfChapter gst:CGST_ChapterXVIII ; rdfs:label "Sec 110 CGST_ - President and Members of Appellate Tribunal, their qualification, appointment, conditions of service, etc."@en .
+gst:CGST_Section111 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "111" ; gst:sectionTitle "Procedure before Appellate Tribunal" ;
+    gst:partOfChapter gst:CGST_ChapterXVIII ; rdfs:label "Sec 111 CGST_ - Procedure before Appellate Tribunal"@en .
+gst:CGST_Section112 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "112" ; gst:sectionTitle "Appeals to Appellate Tribunal" ;
+    gst:partOfChapter gst:CGST_ChapterXVIII ; rdfs:label "Sec 112 CGST_ - Appeals to Appellate Tribunal"@en .
+gst:CGST_Section113 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "113" ; gst:sectionTitle "Orders of Appellate Tribunal" ;
+    gst:partOfChapter gst:CGST_ChapterXVIII ; rdfs:label "Sec 113 CGST_ - Orders of Appellate Tribunal"@en .
+gst:CGST_Section114 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "114" ; gst:sectionTitle "Financial and Administrative Powers of President" ;
+    gst:partOfChapter gst:CGST_ChapterXVIII ; rdfs:label "Sec 114 CGST_ - Financial and Administrative Powers of President"@en .
+gst:CGST_Section115 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "115" ; gst:sectionTitle "Interest on refund of amount paid for admission of appeal" ;
+    gst:partOfChapter gst:CGST_ChapterXVIII ; rdfs:label "Sec 115 CGST_ - Interest on refund of amount paid for admission of appeal"@en .
+gst:CGST_Section116 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "116" ; gst:sectionTitle "Appearance by authorised representative" ;
+    gst:partOfChapter gst:CGST_ChapterXVIII ; rdfs:label "Sec 116 CGST_ - Appearance by authorised representative"@en .
+gst:CGST_Section117 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "117" ; gst:sectionTitle "Appeal to High Court" ;
+    gst:partOfChapter gst:CGST_ChapterXVIII ; rdfs:label "Sec 117 CGST_ - Appeal to High Court"@en .
+gst:CGST_Section118 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "118" ; gst:sectionTitle "Appeal to Supreme Court" ;
+    gst:partOfChapter gst:CGST_ChapterXVIII ; rdfs:label "Sec 118 CGST_ - Appeal to Supreme Court"@en .
+gst:CGST_Section119 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "119" ; gst:sectionTitle "Sums due to be paid notwithstanding appeal, etc." ;
+    gst:partOfChapter gst:CGST_ChapterXVIII ; rdfs:label "Sec 119 CGST_ - Sums due to be paid notwithstanding appeal, etc."@en .
+gst:CGST_Section120 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "120" ; gst:sectionTitle "Appeal not to be filed in certain cases" ;
+    gst:partOfChapter gst:CGST_ChapterXVIII ; rdfs:label "Sec 120 CGST_ - Appeal not to be filed in certain cases"@en .
+gst:CGST_Section121 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "121" ; gst:sectionTitle "Non-appealable decisions and orders" ;
+    gst:partOfChapter gst:CGST_ChapterXVIII ; rdfs:label "Sec 121 CGST_ - Non-appealable decisions and orders"@en .
+
+gst:CGST_ChapterXIX a owl:NamedIndividual, gst:Chapter ;
+    gst:chapterNumber "XIX" ; gst:chapterTitle "Offences and Penalties" ;
+    gst:partOfAct gst:CGSTAct2017 ; rdfs:label "Chapter XIX - Offences and Penalties"@en .
+gst:CGST_Section122 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "122" ; gst:sectionTitle "Penalty for certain offences" ;
+    gst:partOfChapter gst:CGST_ChapterXIX ; rdfs:label "Sec 122 CGST_ - Penalty for certain offences"@en .
+gst:CGST_Section122A a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "122A" ; gst:sectionTitle "Penalty for failure to register certain machines used in manufacture of goods as per special procedure" ;
+    gst:partOfChapter gst:CGST_ChapterXIX ; rdfs:label "Sec 122A CGST_ - Penalty for failure to register certain machines used in manufacture of goods as per special procedure"@en .
+gst:CGST_Section122B a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "122B" ; gst:sectionTitle "Penalty for failure to comply with track and trace mechanism" ;
+    gst:partOfChapter gst:CGST_ChapterXIX ; rdfs:label "Sec 122B CGST_ - Penalty for failure to comply with track and trace mechanism"@en .
+gst:CGST_Section123 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "123" ; gst:sectionTitle "Penalty for failure to furnish information return" ;
+    gst:partOfChapter gst:CGST_ChapterXIX ; rdfs:label "Sec 123 CGST_ - Penalty for failure to furnish information return"@en .
+gst:CGST_Section124 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "124" ; gst:sectionTitle "Fine for failure to furnish statistics" ;
+    gst:partOfChapter gst:CGST_ChapterXIX ; rdfs:label "Sec 124 CGST_ - Fine for failure to furnish statistics"@en .
+gst:CGST_Section125 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "125" ; gst:sectionTitle "General penalty" ;
+    gst:partOfChapter gst:CGST_ChapterXIX ; rdfs:label "Sec 125 CGST_ - General penalty"@en .
+gst:CGST_Section126 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "126" ; gst:sectionTitle "General disciplines related to penalty" ;
+    gst:partOfChapter gst:CGST_ChapterXIX ; rdfs:label "Sec 126 CGST_ - General disciplines related to penalty"@en .
+gst:CGST_Section127 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "127" ; gst:sectionTitle "Power to impose penalty in certain cases" ;
+    gst:partOfChapter gst:CGST_ChapterXIX ; rdfs:label "Sec 127 CGST_ - Power to impose penalty in certain cases"@en .
+gst:CGST_Section128 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "128" ; gst:sectionTitle "Power to waive penalty or fee or both" ;
+    gst:partOfChapter gst:CGST_ChapterXIX ; rdfs:label "Sec 128 CGST_ - Power to waive penalty or fee or both"@en .
+gst:CGST_Section128A a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "128A" ; gst:sectionTitle "Waiver of interest or penalty or both relating to demands raised under section 73, for certain tax periods" ;
+    gst:partOfChapter gst:CGST_ChapterXIX ; rdfs:label "Sec 128A CGST_ - Waiver of interest or penalty or both relating to demands raised under section 73, for certain tax periods"@en .
+gst:CGST_Section129 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "129" ; gst:sectionTitle "Detention, seizure and release of goods and conveyances in transit" ;
+    gst:partOfChapter gst:CGST_ChapterXIX ; rdfs:label "Sec 129 CGST_ - Detention, seizure and release of goods and conveyances in transit"@en .
+gst:CGST_Section130 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "130" ; gst:sectionTitle "Confiscation of goods or conveyances and levy of penalty" ;
+    gst:partOfChapter gst:CGST_ChapterXIX ; rdfs:label "Sec 130 CGST_ - Confiscation of goods or conveyances and levy of penalty"@en .
+gst:CGST_Section131 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "131" ; gst:sectionTitle "Confiscation or penalty not to interfere with other punishments" ;
+    gst:partOfChapter gst:CGST_ChapterXIX ; rdfs:label "Sec 131 CGST_ - Confiscation or penalty not to interfere with other punishments"@en .
+gst:CGST_Section132 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "132" ; gst:sectionTitle "Punishment for certain offences" ;
+    gst:partOfChapter gst:CGST_ChapterXIX ; rdfs:label "Sec 132 CGST_ - Punishment for certain offences"@en .
+gst:CGST_Section133 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "133" ; gst:sectionTitle "Liability of officers and certain other persons" ;
+    gst:partOfChapter gst:CGST_ChapterXIX ; rdfs:label "Sec 133 CGST_ - Liability of officers and certain other persons"@en .
+gst:CGST_Section134 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "134" ; gst:sectionTitle "Cognizance of offences" ;
+    gst:partOfChapter gst:CGST_ChapterXIX ; rdfs:label "Sec 134 CGST_ - Cognizance of offences"@en .
+gst:CGST_Section135 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "135" ; gst:sectionTitle "Presumption of culpable mental state" ;
+    gst:partOfChapter gst:CGST_ChapterXIX ; rdfs:label "Sec 135 CGST_ - Presumption of culpable mental state"@en .
+gst:CGST_Section136 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "136" ; gst:sectionTitle "Relevancy of statements under certain circumstances" ;
+    gst:partOfChapter gst:CGST_ChapterXIX ; rdfs:label "Sec 136 CGST_ - Relevancy of statements under certain circumstances"@en .
+gst:CGST_Section137 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "137" ; gst:sectionTitle "Offences by companies" ;
+    gst:partOfChapter gst:CGST_ChapterXIX ; rdfs:label "Sec 137 CGST_ - Offences by companies"@en .
+gst:CGST_Section138 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "138" ; gst:sectionTitle "Compounding of offences" ;
+    gst:partOfChapter gst:CGST_ChapterXIX ; rdfs:label "Sec 138 CGST_ - Compounding of offences"@en .
+
+gst:CGST_ChapterXX a owl:NamedIndividual, gst:Chapter ;
+    gst:chapterNumber "XX" ; gst:chapterTitle "Transitional Provisions" ;
+    gst:partOfAct gst:CGSTAct2017 ; rdfs:label "Chapter XX - Transitional Provisions"@en .
+gst:CGST_Section139 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "139" ; gst:sectionTitle "Migration of existing taxpayers" ;
+    gst:partOfChapter gst:CGST_ChapterXX ; rdfs:label "Sec 139 CGST_ - Migration of existing taxpayers"@en .
+gst:CGST_Section140 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "140" ; gst:sectionTitle "Transitional arrangements for input tax credit" ;
+    gst:partOfChapter gst:CGST_ChapterXX ; rdfs:label "Sec 140 CGST_ - Transitional arrangements for input tax credit"@en .
+gst:CGST_Section141 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "141" ; gst:sectionTitle "Transitional provisions relating to job work" ;
+    gst:partOfChapter gst:CGST_ChapterXX ; rdfs:label "Sec 141 CGST_ - Transitional provisions relating to job work"@en .
+gst:CGST_Section142 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "142" ; gst:sectionTitle "Miscellaneous transitional provisions" ;
+    gst:partOfChapter gst:CGST_ChapterXX ; rdfs:label "Sec 142 CGST_ - Miscellaneous transitional provisions"@en .
+
+gst:CGST_ChapterXXI a owl:NamedIndividual, gst:Chapter ;
+    gst:chapterNumber "XXI" ; gst:chapterTitle "Miscellaneous" ;
+    gst:partOfAct gst:CGSTAct2017 ; rdfs:label "Chapter XXI - Miscellaneous"@en .
+gst:CGST_Section143 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "143" ; gst:sectionTitle "Job work procedure" ;
+    gst:partOfChapter gst:CGST_ChapterXXI ; rdfs:label "Sec 143 CGST_ - Job work procedure"@en .
+gst:CGST_Section144 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "144" ; gst:sectionTitle "Presumption as to documents in certain cases" ;
+    gst:partOfChapter gst:CGST_ChapterXXI ; rdfs:label "Sec 144 CGST_ - Presumption as to documents in certain cases"@en .
+gst:CGST_Section145 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "145" ; gst:sectionTitle "Admissibility of micro films, facsimile copies of documents and computer printouts as documents and as evidence" ;
+    gst:partOfChapter gst:CGST_ChapterXXI ; rdfs:label "Sec 145 CGST_ - Admissibility of micro films, facsimile copies of documents and computer printouts as documents and as evidence"@en .
+gst:CGST_Section146 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "146" ; gst:sectionTitle "Common Portal" ;
+    gst:partOfChapter gst:CGST_ChapterXXI ; rdfs:label "Sec 146 CGST_ - Common Portal"@en .
+gst:CGST_Section147 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "147" ; gst:sectionTitle "Deemed exports" ;
+    gst:partOfChapter gst:CGST_ChapterXXI ; rdfs:label "Sec 147 CGST_ - Deemed exports"@en .
+gst:CGST_Section148 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "148" ; gst:sectionTitle "Special procedure for certain processes" ;
+    gst:partOfChapter gst:CGST_ChapterXXI ; rdfs:label "Sec 148 CGST_ - Special procedure for certain processes"@en .
+gst:CGST_Section148A a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "148A" ; gst:sectionTitle "Track and trace mechanism for certain goods" ;
+    gst:partOfChapter gst:CGST_ChapterXXI ; rdfs:label "Sec 148A CGST_ - Track and trace mechanism for certain goods"@en .
+gst:CGST_Section149 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "149" ; gst:sectionTitle "Goods and services tax compliance rating" ;
+    gst:partOfChapter gst:CGST_ChapterXXI ; rdfs:label "Sec 149 CGST_ - Goods and services tax compliance rating"@en .
+gst:CGST_Section150 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "150" ; gst:sectionTitle "Obligation to furnish information return" ;
+    gst:partOfChapter gst:CGST_ChapterXXI ; rdfs:label "Sec 150 CGST_ - Obligation to furnish information return"@en .
+gst:CGST_Section151 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "151" ; gst:sectionTitle "Power to call for information" ;
+    gst:partOfChapter gst:CGST_ChapterXXI ; rdfs:label "Sec 151 CGST_ - Power to call for information"@en .
+gst:CGST_Section152 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "152" ; gst:sectionTitle "Bar on disclosure of information" ;
+    gst:partOfChapter gst:CGST_ChapterXXI ; rdfs:label "Sec 152 CGST_ - Bar on disclosure of information"@en .
+gst:CGST_Section153 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "153" ; gst:sectionTitle "Taking assistance from an expert" ;
+    gst:partOfChapter gst:CGST_ChapterXXI ; rdfs:label "Sec 153 CGST_ - Taking assistance from an expert"@en .
+gst:CGST_Section154 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "154" ; gst:sectionTitle "Power to take samples" ;
+    gst:partOfChapter gst:CGST_ChapterXXI ; rdfs:label "Sec 154 CGST_ - Power to take samples"@en .
+gst:CGST_Section155 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "155" ; gst:sectionTitle "Burden of proof" ;
+    gst:partOfChapter gst:CGST_ChapterXXI ; rdfs:label "Sec 155 CGST_ - Burden of proof"@en .
+gst:CGST_Section156 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "156" ; gst:sectionTitle "Persons deemed to be public servants" ;
+    gst:partOfChapter gst:CGST_ChapterXXI ; rdfs:label "Sec 156 CGST_ - Persons deemed to be public servants"@en .
+gst:CGST_Section157 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "157" ; gst:sectionTitle "Protection of action taken under this Act" ;
+    gst:partOfChapter gst:CGST_ChapterXXI ; rdfs:label "Sec 157 CGST_ - Protection of action taken under this Act"@en .
+gst:CGST_Section158 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "158" ; gst:sectionTitle "Disclosure of information by a public servant" ;
+    gst:partOfChapter gst:CGST_ChapterXXI ; rdfs:label "Sec 158 CGST_ - Disclosure of information by a public servant"@en .
+gst:CGST_Section158A a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "158A" ; gst:sectionTitle "Consent based sharing of information furnished by taxable person" ;
+    gst:partOfChapter gst:CGST_ChapterXXI ; rdfs:label "Sec 158A CGST_ - Consent based sharing of information furnished by taxable person"@en .
+gst:CGST_Section159 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "159" ; gst:sectionTitle "Publication of information in respect of persons in certain cases" ;
+    gst:partOfChapter gst:CGST_ChapterXXI ; rdfs:label "Sec 159 CGST_ - Publication of information in respect of persons in certain cases"@en .
+gst:CGST_Section160 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "160" ; gst:sectionTitle "Assessment proceedings, etc., not to be invalid on certain grounds" ;
+    gst:partOfChapter gst:CGST_ChapterXXI ; rdfs:label "Sec 160 CGST_ - Assessment proceedings, etc., not to be invalid on certain grounds"@en .
+gst:CGST_Section161 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "161" ; gst:sectionTitle "Rectification of errors apparent on the face of record" ;
+    gst:partOfChapter gst:CGST_ChapterXXI ; rdfs:label "Sec 161 CGST_ - Rectification of errors apparent on the face of record"@en .
+gst:CGST_Section162 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "162" ; gst:sectionTitle "Bar on jurisdiction of civil courts" ;
+    gst:partOfChapter gst:CGST_ChapterXXI ; rdfs:label "Sec 162 CGST_ - Bar on jurisdiction of civil courts"@en .
+gst:CGST_Section163 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "163" ; gst:sectionTitle "Levy of fee" ;
+    gst:partOfChapter gst:CGST_ChapterXXI ; rdfs:label "Sec 163 CGST_ - Levy of fee"@en .
+gst:CGST_Section164 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "164" ; gst:sectionTitle "Power of Government to make rules" ;
+    gst:partOfChapter gst:CGST_ChapterXXI ; rdfs:label "Sec 164 CGST_ - Power of Government to make rules"@en .
+gst:CGST_Section165 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "165" ; gst:sectionTitle "Power to make regulations" ;
+    gst:partOfChapter gst:CGST_ChapterXXI ; rdfs:label "Sec 165 CGST_ - Power to make regulations"@en .
+gst:CGST_Section166 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "166" ; gst:sectionTitle "Laying of rules, regulations and notifications" ;
+    gst:partOfChapter gst:CGST_ChapterXXI ; rdfs:label "Sec 166 CGST_ - Laying of rules, regulations and notifications"@en .
+gst:CGST_Section167 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "167" ; gst:sectionTitle "Delegation of powers" ;
+    gst:partOfChapter gst:CGST_ChapterXXI ; rdfs:label "Sec 167 CGST_ - Delegation of powers"@en .
+gst:CGST_Section168 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "168" ; gst:sectionTitle "Power to issue instructions or directions" ;
+    gst:partOfChapter gst:CGST_ChapterXXI ; rdfs:label "Sec 168 CGST_ - Power to issue instructions or directions"@en .
+gst:CGST_Section168A a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "168A" ; gst:sectionTitle "Power of Government to extend time limit in special circumstances" ;
+    gst:partOfChapter gst:CGST_ChapterXXI ; rdfs:label "Sec 168A CGST_ - Power of Government to extend time limit in special circumstances"@en .
+gst:CGST_Section169 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "169" ; gst:sectionTitle "Service of notice in certain circumstances" ;
+    gst:partOfChapter gst:CGST_ChapterXXI ; rdfs:label "Sec 169 CGST_ - Service of notice in certain circumstances"@en .
+gst:CGST_Section170 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "170" ; gst:sectionTitle "Rounding off of tax, etc." ;
+    gst:partOfChapter gst:CGST_ChapterXXI ; rdfs:label "Sec 170 CGST_ - Rounding off of tax, etc."@en .
+gst:CGST_Section171 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "171" ; gst:sectionTitle "Anti-profiteering measure" ;
+    gst:partOfChapter gst:CGST_ChapterXXI ; rdfs:label "Sec 171 CGST_ - Anti-profiteering measure"@en .
+gst:CGST_Section172 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "172" ; gst:sectionTitle "Removal of difficulties" ;
+    gst:partOfChapter gst:CGST_ChapterXXI ; rdfs:label "Sec 172 CGST_ - Removal of difficulties"@en .
+gst:CGST_Section173 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "173" ; gst:sectionTitle "Amendment of Act 32 of 1994" ;
+    gst:partOfChapter gst:CGST_ChapterXXI ; rdfs:label "Sec 173 CGST_ - Amendment of Act 32 of 1994"@en .
+gst:CGST_Section174 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "174" ; gst:sectionTitle "Repeal and saving" ;
+    gst:partOfChapter gst:CGST_ChapterXXI ; rdfs:label "Sec 174 CGST_ - Repeal and saving"@en .
+
+gst:IGSTAct2017 a owl:NamedIndividual, gst:Act ;
+    rdfs:label "Integrated Goods and Services Tax Act, 2017 (No. 13 of 2017)"@en .
+
+gst:IGST_ChapterI a owl:NamedIndividual, gst:Chapter ;
+    gst:chapterNumber "I" ; gst:chapterTitle "Preliminary" ;
+    gst:partOfAct gst:IGSTAct2017 ; rdfs:label "Chapter I - Preliminary"@en .
+gst:IGST_Section1 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "1" ; gst:sectionTitle "Short title, extent and commencement" ;
+    gst:partOfChapter gst:IGST_ChapterI ; rdfs:label "Sec 1 IGST_ - Short title, extent and commencement"@en .
+gst:IGST_Section2 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "2" ; gst:sectionTitle "Definitions" ;
+    gst:partOfChapter gst:IGST_ChapterI ; rdfs:label "Sec 2 IGST_ - Definitions"@en .
+
+gst:IGST_ChapterII a owl:NamedIndividual, gst:Chapter ;
+    gst:chapterNumber "II" ; gst:chapterTitle "Administration" ;
+    gst:partOfAct gst:IGSTAct2017 ; rdfs:label "Chapter II - Administration"@en .
+gst:IGST_Section3 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "3" ; gst:sectionTitle "Appointment of officers" ;
+    gst:partOfChapter gst:IGST_ChapterII ; rdfs:label "Sec 3 IGST_ - Appointment of officers"@en .
+gst:IGST_Section4 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "4" ; gst:sectionTitle "Authorisation of officers of State tax or Union territory tax as proper officer in certain circumstances" ;
+    gst:partOfChapter gst:IGST_ChapterII ; rdfs:label "Sec 4 IGST_ - Authorisation of officers of State tax or Union territory tax as proper officer in certain circumstances"@en .
+
+gst:IGST_ChapterIII a owl:NamedIndividual, gst:Chapter ;
+    gst:chapterNumber "III" ; gst:chapterTitle "Levy and Collection of Tax" ;
+    gst:partOfAct gst:IGSTAct2017 ; rdfs:label "Chapter III - Levy and Collection of Tax"@en .
+gst:IGST_Section5 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "5" ; gst:sectionTitle "Levy and collection" ;
+    gst:partOfChapter gst:IGST_ChapterIII ; rdfs:label "Sec 5 IGST_ - Levy and collection"@en .
+gst:IGST_Section6 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "6" ; gst:sectionTitle "Power to grant exemption from tax" ;
+    gst:partOfChapter gst:IGST_ChapterIII ; rdfs:label "Sec 6 IGST_ - Power to grant exemption from tax"@en .
+gst:IGST_Section6A a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "6A" ; gst:sectionTitle "Power not to recover Goods and Services Tax not levied or short-levied as a result of general practice" ;
+    gst:partOfChapter gst:IGST_ChapterIII ; rdfs:label "Sec 6A IGST_ - Power not to recover Goods and Services Tax not levied or short-levied as a result of general practice"@en .
+
+gst:IGST_ChapterIV a owl:NamedIndividual, gst:Chapter ;
+    gst:chapterNumber "IV" ; gst:chapterTitle "Determination of Nature of Supply" ;
+    gst:partOfAct gst:IGSTAct2017 ; rdfs:label "Chapter IV - Determination of Nature of Supply"@en .
+gst:IGST_Section7 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "7" ; gst:sectionTitle "Inter-State supply" ;
+    gst:partOfChapter gst:IGST_ChapterIV ; rdfs:label "Sec 7 IGST_ - Inter-State supply"@en .
+gst:IGST_Section8 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "8" ; gst:sectionTitle "Intra-State supply" ;
+    gst:partOfChapter gst:IGST_ChapterIV ; rdfs:label "Sec 8 IGST_ - Intra-State supply"@en .
+gst:IGST_Section9 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "9" ; gst:sectionTitle "Supplies in territorial waters" ;
+    gst:partOfChapter gst:IGST_ChapterIV ; rdfs:label "Sec 9 IGST_ - Supplies in territorial waters"@en .
+
+gst:IGST_ChapterV a owl:NamedIndividual, gst:Chapter ;
+    gst:chapterNumber "V" ; gst:chapterTitle "Place of Supply of Goods or Services or Both" ;
+    gst:partOfAct gst:IGSTAct2017 ; rdfs:label "Chapter V - Place of Supply of Goods or Services or Both"@en .
+gst:IGST_Section10 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "10" ; gst:sectionTitle "Place of supply of goods other than supply of goods imported into, or exported from India" ;
+    gst:partOfChapter gst:IGST_ChapterV ; rdfs:label "Sec 10 IGST_ - Place of supply of goods other than supply of goods imported into, or exported from India"@en .
+gst:IGST_Section11 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "11" ; gst:sectionTitle "Place of supply of goods imported into, or exported from India" ;
+    gst:partOfChapter gst:IGST_ChapterV ; rdfs:label "Sec 11 IGST_ - Place of supply of goods imported into, or exported from India"@en .
+gst:IGST_Section12 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "12" ; gst:sectionTitle "Place of supply of services where location of supplier and recipient is in India" ;
+    gst:partOfChapter gst:IGST_ChapterV ; rdfs:label "Sec 12 IGST_ - Place of supply of services where location of supplier and recipient is in India"@en .
+gst:IGST_Section13 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "13" ; gst:sectionTitle "Place of supply of services where location of supplier or location of recipient is outside India" ;
+    gst:partOfChapter gst:IGST_ChapterV ; rdfs:label "Sec 13 IGST_ - Place of supply of services where location of supplier or location of recipient is outside India"@en .
+gst:IGST_Section14 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "14" ; gst:sectionTitle "Special provision for payment of tax by a supplier of online information and database access or retrieval services" ;
+    gst:partOfChapter gst:IGST_ChapterV ; rdfs:label "Sec 14 IGST_ - Special provision for payment of tax by a supplier of online information and database access or retrieval services"@en .
+gst:IGST_Section14A a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "14A" ; gst:sectionTitle "Special provision for specified actionable claims supplied by a person located outside taxable territory" ;
+    gst:partOfChapter gst:IGST_ChapterV ; rdfs:label "Sec 14A IGST_ - Special provision for specified actionable claims supplied by a person located outside taxable territory"@en .
+
+gst:IGST_ChapterVI a owl:NamedIndividual, gst:Chapter ;
+    gst:chapterNumber "VI" ; gst:chapterTitle "Refund of Integrated Tax to International Tourist" ;
+    gst:partOfAct gst:IGSTAct2017 ; rdfs:label "Chapter VI - Refund of Integrated Tax to International Tourist"@en .
+gst:IGST_Section15 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "15" ; gst:sectionTitle "Refund of integrated tax paid on supply of goods to tourist leaving India" ;
+    gst:partOfChapter gst:IGST_ChapterVI ; rdfs:label "Sec 15 IGST_ - Refund of integrated tax paid on supply of goods to tourist leaving India"@en .
+
+gst:IGST_ChapterVII a owl:NamedIndividual, gst:Chapter ;
+    gst:chapterNumber "VII" ; gst:chapterTitle "Zero Rated Supply" ;
+    gst:partOfAct gst:IGSTAct2017 ; rdfs:label "Chapter VII - Zero Rated Supply"@en .
+gst:IGST_Section16 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "16" ; gst:sectionTitle "Zero rated supply" ;
+    gst:partOfChapter gst:IGST_ChapterVII ; rdfs:label "Sec 16 IGST_ - Zero rated supply"@en .
+
+gst:IGST_ChapterVIII a owl:NamedIndividual, gst:Chapter ;
+    gst:chapterNumber "VIII" ; gst:chapterTitle "Apportionment of Tax and Settlement of Funds" ;
+    gst:partOfAct gst:IGSTAct2017 ; rdfs:label "Chapter VIII - Apportionment of Tax and Settlement of Funds"@en .
+gst:IGST_Section17 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "17" ; gst:sectionTitle "Apportionment of tax and settlement of funds" ;
+    gst:partOfChapter gst:IGST_ChapterVIII ; rdfs:label "Sec 17 IGST_ - Apportionment of tax and settlement of funds"@en .
+gst:IGST_Section17A a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "17A" ; gst:sectionTitle "Transfer of certain amounts" ;
+    gst:partOfChapter gst:IGST_ChapterVIII ; rdfs:label "Sec 17A IGST_ - Transfer of certain amounts"@en .
+gst:IGST_Section18 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "18" ; gst:sectionTitle "Transfer of input tax credit" ;
+    gst:partOfChapter gst:IGST_ChapterVIII ; rdfs:label "Sec 18 IGST_ - Transfer of input tax credit"@en .
+gst:IGST_Section19 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "19" ; gst:sectionTitle "Tax wrongfully collected and paid to Central Government or State Government" ;
+    gst:partOfChapter gst:IGST_ChapterVIII ; rdfs:label "Sec 19 IGST_ - Tax wrongfully collected and paid to Central Government or State Government"@en .
+
+gst:IGST_ChapterIX a owl:NamedIndividual, gst:Chapter ;
+    gst:chapterNumber "IX" ; gst:chapterTitle "Miscellaneous" ;
+    gst:partOfAct gst:IGSTAct2017 ; rdfs:label "Chapter IX - Miscellaneous"@en .
+gst:IGST_Section20 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "20" ; gst:sectionTitle "Application of provisions of Central Goods and Services Tax Act" ;
+    gst:partOfChapter gst:IGST_ChapterIX ; rdfs:label "Sec 20 IGST_ - Application of provisions of Central Goods and Services Tax Act"@en .
+gst:IGST_Section21 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "21" ; gst:sectionTitle "Import of services made on or after the appointed day" ;
+    gst:partOfChapter gst:IGST_ChapterIX ; rdfs:label "Sec 21 IGST_ - Import of services made on or after the appointed day"@en .
+gst:IGST_Section22 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "22" ; gst:sectionTitle "Power to make rules" ;
+    gst:partOfChapter gst:IGST_ChapterIX ; rdfs:label "Sec 22 IGST_ - Power to make rules"@en .
+gst:IGST_Section23 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "23" ; gst:sectionTitle "Power to make regulations" ;
+    gst:partOfChapter gst:IGST_ChapterIX ; rdfs:label "Sec 23 IGST_ - Power to make regulations"@en .
+gst:IGST_Section24 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "24" ; gst:sectionTitle "Laying of rules, regulations and notifications" ;
+    gst:partOfChapter gst:IGST_ChapterIX ; rdfs:label "Sec 24 IGST_ - Laying of rules, regulations and notifications"@en .
+gst:IGST_Section25 a owl:NamedIndividual, gst:Section ;
+    gst:sectionNumber "25" ; gst:sectionTitle "Removal of difficulties" ;
+    gst:partOfChapter gst:IGST_ChapterIX ; rdfs:label "Sec 25 IGST_ - Removal of difficulties"@en .
+
+#################################################################
+#  ENRICHED DETAIL FOR KEY SECTIONS (deeply extracted from source)
+#################################################################
+
+gst:CGST_Section2 rdfs:comment "Sec 2 defines ~120 terms used throughout the CGST Act, including 'aggregate turnover' (2(6)), 'business' (2(17)), 'casual taxable person' (2(20)), 'composite supply' (2(30)), 'electronic commerce operator' (2(45)), 'exempt supply' (2(47)), 'input tax credit' (2(63)), 'mixed supply' (2(74)), 'non-taxable supply' (2(78)), 'person' (2(84)), 'proper officer' (2(91)), 'registered person' (2(94)), 'taxable person' (2(107)), 'taxable supply' (2(108))."@en .
+
+gst:CGST_Section7 rdfs:comment "Defines the scope of 'supply': all forms of supply of goods/services for consideration in the course/furtherance of business (incl. transactions with members per clause (aa) inserted retrospectively from 01.07.2017), import of services for consideration, and Schedule I activities without consideration; excludes Schedule III activities and notified government activities."@en .
+
+gst:CGST_Section9 rdfs:comment "Sec 9(1): CGST levied on intra-State supplies at a rate notified by Government (max 20%) on the recommendations of the GST Council, payable by the supplier (subject to Sec 9(4) - petroleum products currently outside GST for this sub-section). Sec 9(3)/(4): reverse charge on notified supplies / supplies from unregistered persons."@en .
+
+gst:CGST_Section10 rdfs:comment "Composition levy: Sec 10(1) - manufacturers/other suppliers of goods (and Schedule II para 6(b) restaurant-type services) with preceding-FY aggregate turnover not exceeding the notified limit (Rs 50 lakh, enhanceable up to Rs 1.5 crore, Rs 75 lakh for specified special category States) may opt to pay 1% / 2.5%+2.5% / 0.5%+0.5% of turnover in lieu of normal tax, subject to conditions in the proviso (no inter-State outward supply, no supply through e-commerce collecting TCS except as permitted, no supply of non-permitted services beyond the higher of 10% of turnover or Rs 5 lakh, etc.). Sec 10(2A) extends a parallel composition option (rate up to 3%+3%) to service providers with turnover up to Rs 50 lakh."@en .
+
+gst:CGST_Section16 rdfs:comment "ITC eligibility conditions (Sec 16(2)): possession of tax invoice/debit note, communication of invoice details under Sec 37 (not restricted under Sec 38), receipt of goods/services, tax actually paid to Government by supplier, and furnishing of return under Sec 39. Payment to supplier required within 180 days (else ITC to be reversed with interest). Sec 16(4): ITC cannot be claimed after 30 November following the end of the relevant financial year (or date of furnishing the annual return, if earlier)."@en .
+
+gst:CGST_Section17 rdfs:comment "Sec 17(1)/(2): apportionment of credit where goods/services are used partly for business and partly for other purposes, or partly for taxable/zero-rated and partly for exempt supplies - credit restricted to the business/taxable portion. Sec 17(5): blocked credits list (motor vehicles/conveyances subject to exceptions, food & beverages, outdoor catering, health/fitness/club membership, works contract services for immovable property other than plant & machinery, goods/services for construction of immovable property on own account, tax paid under composition levy, goods/services for personal consumption, goods lost/stolen/destroyed/written off or disposed of as gifts/free samples, and tax paid under demand for fraud/suppression cases)."@en .
+
+gst:CGST_Section22 rdfs:comment "Every supplier is liable to register in the State/UT from where a taxable supply is made if aggregate turnover in a financial year exceeds Rs 20 lakh (Rs 10 lakh for special category States); the Government may, by notification, raise this general limit up to Rs 40 lakh for a supplier engaged EXCLUSIVELY in the supply of goods (subject to conditions)."@en ;
+    gst:hasThreshold gst:ThresholdRegistrationGeneral20L, gst:ThresholdRegistrationSpecialCategory10L, gst:ThresholdRegistrationGoodsOnly40L .
+
+gst:CGST_Section23 rdfs:comment "Persons not liable for registration: (a) persons exclusively engaged in supplying wholly-exempt or non-taxable goods/services; (b) agriculturists, to the extent of supply of produce out of cultivation of land; and (c) such other persons/categories as the Government may notify on Council recommendation."@en .
+
+gst:CGST_Section24 rdfs:comment "Compulsory registration irrespective of turnover for 11 categories, including: inter-State suppliers; casual taxable persons; persons liable under reverse charge; persons liable to pay tax under Sec 9(5) (electronic commerce); non-resident taxable persons; persons required to deduct TDS; agents supplying on behalf of others; Input Service Distributors; persons supplying through an e-commerce operator (subject to notified exceptions); every electronic commerce operator required to collect TCS; and other notified categories."@en .
+
+gst:CGST_Section39 rdfs:comment "Prescribes the returns to be furnished by different categories of registered persons (normal taxpayers under Sec 39(1)/monthly-or-QRMP, composition taxpayers under Sec 39(2)/quarterly, non-resident taxable persons, ISDs, and TDS deductors) and their respective due dates."@en .
+
+gst:CGST_Section44 rdfs:comment "Every registered person (other than an ISD, a casual/non-resident taxable person, and a person paying tax under Sec 51/52) must furnish an annual return, which may include a self-certified reconciliation statement, for every financial year, by the notified due date."@en .
+
+gst:CGST_Section50 rdfs:comment "Sec 50(1): interest at 18% p.a. on tax paid after the due date (computed, post-amendment, only on the portion of liability discharged by debiting the electronic cash ledger). Sec 50(3): interest at 24% p.a. where ITC has been wrongly availed AND utilised."@en ;
+    gst:hasThreshold gst:ThresholdInterestDelayedPayment18Pct, gst:ThresholdInterestWrongITC24Pct .
+
+gst:CGST_Section51 rdfs:comment "Specified deductors (Government departments/agencies, local authorities, PSUs, and notified persons) must deduct TDS at 1% CGST + 1% SGST (or 2% IGST) from payments to a supplier under a contract of taxable supply where the total contract value exceeds Rs 2,50,000 (excluding tax)."@en ;
+    gst:hasThreshold gst:ThresholdTDSContractValue250K ;
+    gst:hasApplicableSection gst:CGST_Section51 .
+
+gst:CGST_Section52 rdfs:comment "Every e-commerce operator (other than an agent) must collect TCS not exceeding 1% (notified at 0.5% CGST + 0.5% SGST, or 1% IGST) of the net value of taxable supplies made through it by other suppliers where the operator collects the consideration."@en .
+
+gst:CGST_Section54 rdfs:comment "Refund claims must be made within 2 years of the relevant date. Documentary evidence of no unjust enrichment is waived (self-declaration suffices) for claims not exceeding Rs 2 lakh. Up to 90% of a zero-rated-supply refund claim may be granted provisionally within 60 days of acknowledgment of the complete application, subject to conditions; balance sanctioned after verification."@en ;
+    gst:hasThreshold gst:ThresholdRefundLimitationPeriod2Yr, gst:ThresholdRefundDocEvidenceWaiver2L .
+
+gst:CGST_Section65 rdfs:comment "Commissioner (or an authorised officer) may undertake audit of a registered person's records at the place of business or in office, with at least 15 working days' prior notice; to be completed within 3 months, extendable by the Commissioner by a further 6 months for reasons recorded in writing."@en .
+
+gst:CGST_Section66 rdfs:comment "Special audit may be directed, with the Commissioner's prior approval, by an officer not below the rank of Assistant Commissioner, having regard to the nature and complexity of the case and the interest of revenue, to be conducted by a nominated Chartered Accountant or Cost Accountant, normally within 90 days (extendable by 90 days)."@en .
+
+gst:CGST_Section107 rdfs:comment "Appeal to the Appellate Authority within 3 months of communication of the order (condonable by a further 1 month for sufficient cause). Pre-deposit: the full amount of admitted tax/interest/fine/fee/penalty, PLUS 10% of the remaining disputed tax amount, subject to a cap of Rs 20 crore."@en ;
+    gst:hasThreshold gst:ThresholdAppealLimitation3Months, gst:ThresholdAppealPreDeposit10Pct, gst:ThresholdAppealPreDepositCap20Cr .
+
+gst:CGST_Section122 rdfs:comment "Sec 122(1) lists 21 specified offences (supply without invoice, invoice without supply, tax collected but not remitted beyond 3 months, fraudulent ITC availment/distribution, failure to register, obstruction of officers, tampering with evidence, etc.), each attracting a penalty of Rs 10,000 or the tax evaded/ITC wrongly availed/distributed (whichever is higher). Sec 122(2): general penalty for short-payment/non-payment of tax - the higher of Rs 10,000 or 10% of the tax due (non-fraud), or the higher of Rs 10,000 or the tax evaded (fraud)."@en .
+
+gst:IGST_Section16 rdfs:comment "Zero rated supply = export of goods/services, or supply to a SEZ developer/unit. A registered person may supply under bond/LUT without payment of IGST and claim refund of unutilised ITC, or pay IGST and claim refund of the tax paid (subject to restrictions notified by Government on specified goods/services/persons, and subject to Sec 54 CGST Act refund conditions)."@en .
+
+#################################################################
+#  INDIVIDUALS: THRESHOLDS
+#################################################################
+
+gst:ThresholdRegistrationGeneral20L a owl:NamedIndividual, gst:Threshold ;
+    gst:thresholdAmount "2000000"^^xsd:decimal ; gst:thresholdCurrency "INR" ;
+    gst:legalCitation "Sec 22(1) first proviso omitted / main provision, CGST Act 2017" ;
+    rdfs:label "Registration Threshold - General (Rs 20 Lakh)"@en .
+gst:ThresholdRegistrationSpecialCategory10L a owl:NamedIndividual, gst:Threshold ;
+    gst:thresholdAmount "1000000"^^xsd:decimal ; gst:thresholdCurrency "INR" ;
+    gst:legalCitation "Sec 22(1) proviso, CGST Act 2017" ;
+    rdfs:label "Registration Threshold - Special Category States (Rs 10 Lakh)"@en .
+gst:ThresholdRegistrationGoodsOnly40L a owl:NamedIndividual, gst:Threshold ;
+    gst:thresholdAmount "4000000"^^xsd:decimal ; gst:thresholdCurrency "INR" ;
+    gst:legalCitation "Sec 22(1) proviso (notified enhancement), CGST Act 2017; Notification 10/2019-CT" ;
+    rdfs:label "Registration Threshold - Goods-Only Supplier, Notified States (Rs 40 Lakh)"@en ;
+    gst:sourceNote "Enhancement is optional per State; not all States adopted the Rs 40 lakh limit for goods suppliers." .
+gst:ThresholdCompositionGoods1_5Cr a owl:NamedIndividual, gst:Threshold ;
+    gst:thresholdAmount "15000000"^^xsd:decimal ; gst:thresholdCurrency "INR" ;
+    gst:legalCitation "Sec 10(1) proviso, CGST Act 2017" ;
+    rdfs:label "Composition Threshold - Goods, General States (Rs 1.5 Crore)"@en .
+gst:ThresholdCompositionGoodsSpecialCategory75L a owl:NamedIndividual, gst:Threshold ;
+    gst:thresholdAmount "7500000"^^xsd:decimal ; gst:thresholdCurrency "INR" ;
+    gst:legalCitation "Sec 10(1) proviso, CGST Act 2017 (specified special category States)" ;
+    rdfs:label "Composition Threshold - Goods, Specified Special Category States (Rs 75 Lakh)"@en ;
+    gst:sourceNote "The source manual's Sec 10 text confirms a lower enhanced ceiling applies for specified special category States without itemising which of the four (Manipur, Mizoram, Nagaland, Tripura) adopted Rs 75 lakh vs a different figure; modelled here as the commonly-notified Rs 75 lakh figure pending State-wise confirmation." .
+gst:ThresholdCompositionServices50L a owl:NamedIndividual, gst:Threshold ;
+    gst:thresholdAmount "5000000"^^xsd:decimal ; gst:thresholdCurrency "INR" ;
+    gst:legalCitation "Sec 10(2A), CGST Act 2017" ;
+    rdfs:label "Composition Threshold - Services under Sec 10(2A) (Rs 50 Lakh)"@en .
+gst:ThresholdInterestDelayedPayment18Pct a owl:NamedIndividual, gst:Threshold ;
+    gst:thresholdAmount "18"^^xsd:decimal ; gst:thresholdCurrency "PERCENT" ;
+    gst:legalCitation "Sec 50(1), CGST Act 2017" ;
+    rdfs:label "Interest Rate - Delayed Payment (18% p.a.)"@en .
+gst:ThresholdInterestWrongITC24Pct a owl:NamedIndividual, gst:Threshold ;
+    gst:thresholdAmount "24"^^xsd:decimal ; gst:thresholdCurrency "PERCENT" ;
+    gst:legalCitation "Sec 50(3), CGST Act 2017" ;
+    rdfs:label "Interest Rate - Wrongly Availed & Utilised ITC (24% p.a.)"@en .
+gst:ThresholdTDSContractValue250K a owl:NamedIndividual, gst:Threshold ;
+    gst:thresholdAmount "250000"^^xsd:decimal ; gst:thresholdCurrency "INR" ;
+    gst:legalCitation "Sec 51(1), CGST Act 2017" ;
+    rdfs:label "TDS Applicability Threshold - Contract Value (Rs 2,50,000)"@en .
+gst:ThresholdTDSRate1Pct a owl:NamedIndividual, gst:Threshold ;
+    gst:thresholdAmount "1"^^xsd:decimal ; gst:thresholdCurrency "PERCENT" ;
+    gst:legalCitation "Sec 51(1), CGST Act 2017" ; rdfs:label "TDS Rate (1% CGST + 1% SGST)"@en .
+gst:ThresholdTCSRate1Pct a owl:NamedIndividual, gst:Threshold ;
+    gst:thresholdAmount "1"^^xsd:decimal ; gst:thresholdCurrency "PERCENT" ;
+    gst:legalCitation "Sec 52(1), CGST Act 2017; Notification 52/2018-CT" ; rdfs:label "TCS Rate (up to 1%, notified 0.5%+0.5%)"@en .
+gst:ThresholdRefundLimitationPeriod2Yr a owl:NamedIndividual, gst:Threshold ;
+    gst:thresholdAmount "2"^^xsd:decimal ; gst:thresholdCurrency "YEARS" ;
+    gst:legalCitation "Sec 54(1), CGST Act 2017" ; rdfs:label "Refund Claim Limitation Period (2 Years)"@en .
+gst:ThresholdRefundDocEvidenceWaiver2L a owl:NamedIndividual, gst:Threshold ;
+    gst:thresholdAmount "200000"^^xsd:decimal ; gst:thresholdCurrency "INR" ;
+    gst:legalCitation "Sec 54(4) proviso, CGST Act 2017" ; rdfs:label "Refund Documentary-Evidence Waiver Threshold (Rs 2 Lakh)"@en .
+gst:ThresholdRefundProvisional90Pct a owl:NamedIndividual, gst:Threshold ;
+    gst:thresholdAmount "90"^^xsd:decimal ; gst:thresholdCurrency "PERCENT" ;
+    gst:legalCitation "Sec 54(6), CGST Act 2017" ; rdfs:label "Provisional Refund Percentage (90%)"@en .
+gst:ThresholdEInvoicing5Cr a owl:NamedIndividual, gst:Threshold ;
+    gst:thresholdAmount "50000000"^^xsd:decimal ; gst:thresholdCurrency "INR" ;
+    gst:legalCitation "Rule 48(4), CGST Rules 2017; Notification 10/2023-CT dt. 10.05.2023" ;
+    rdfs:label "E-Invoicing Applicability Threshold (Rs 5 Crore, w.e.f. 01.08.2023)"@en ;
+    gst:sourceNote "E-invoicing threshold has been progressively lowered by successive notifications: Rs 500 Cr (2020) -> Rs 100 Cr -> Rs 50 Cr -> Rs 20 Cr -> Rs 10 Cr -> Rs 5 Cr (current, from 01.08.2023)." .
+gst:ThresholdEWayBill50K a owl:NamedIndividual, gst:Threshold ;
+    gst:thresholdAmount "50000"^^xsd:decimal ; gst:thresholdCurrency "INR" ;
+    gst:legalCitation "Rule 138(1), CGST Rules 2017" ;
+    rdfs:label "E-Way Bill Applicability Threshold - Consignment Value (Rs 50,000)"@en .
+gst:ThresholdAppealLimitation3Months a owl:NamedIndividual, gst:Threshold ;
+    gst:thresholdAmount "3"^^xsd:decimal ; gst:thresholdCurrency "MONTHS" ;
+    gst:legalCitation "Sec 107(1), CGST Act 2017" ; rdfs:label "Appeal Limitation Period (3 Months, +1 month condonable)"@en .
+gst:ThresholdAppealPreDeposit10Pct a owl:NamedIndividual, gst:Threshold ;
+    gst:thresholdAmount "10"^^xsd:decimal ; gst:thresholdCurrency "PERCENT" ;
+    gst:legalCitation "Sec 107(6), CGST Act 2017" ; rdfs:label "Appeal Pre-Deposit Percentage (10% of Disputed Tax)"@en .
+gst:ThresholdAppealPreDepositCap20Cr a owl:NamedIndividual, gst:Threshold ;
+    gst:thresholdAmount "200000000"^^xsd:decimal ; gst:thresholdCurrency "INR" ;
+    gst:legalCitation "Sec 107(6), CGST Act 2017" ; rdfs:label "Appeal Pre-Deposit Cap (Rs 20 Crore)"@en .
+gst:ThresholdForwardChargeRateCap20Pct a owl:NamedIndividual, gst:Threshold ;
+    gst:thresholdAmount "20"^^xsd:decimal ; gst:thresholdCurrency "PERCENT" ;
+    gst:legalCitation "Sec 9(1), CGST Act 2017" ;
+    rdfs:label "Statutory Cap on CGST Rate (20%, mirrored by SGST/UTGST -> effective 40% combined cap)"@en .
+
+#################################################################
+#  INDIVIDUALS: SCHEDULES
+#################################################################
+
+gst:CGST_ScheduleI a owl:NamedIndividual, gst:Schedule ;
+    gst:belongsToInstrument gst:CGSTAct2017 ;
+    rdfs:label "Schedule I - Activities to be Treated as Supply Even if Made Without Consideration"@en .
+gst:CGST_ScheduleII a owl:NamedIndividual, gst:Schedule ;
+    gst:belongsToInstrument gst:CGSTAct2017 ;
+    rdfs:label "Schedule II - Activities/Transactions to be Treated as Supply of Goods or Services"@en .
+gst:CGST_ScheduleIII a owl:NamedIndividual, gst:Schedule ;
+    gst:belongsToInstrument gst:CGSTAct2017 ;
+    rdfs:label "Schedule III - Activities/Transactions Treated Neither as Supply of Goods nor Services"@en .
+
+#################################################################
+#  INDIVIDUALS: OTHER ACTS / RULES IN SCOPE (Act-level; not section-expanded)
+#################################################################
+
+gst:CGSTRules2017 a owl:NamedIndividual, gst:Rules ; gst:belongsToInstrument gst:CGSTAct2017 ;
+    rdfs:label "Central Goods and Services Tax Rules, 2017"@en .
+gst:IGSTRules2017 a owl:NamedIndividual, gst:Rules ; gst:belongsToInstrument gst:IGSTAct2017 ;
+    rdfs:label "Integrated Goods and Services Tax Rules, 2017"@en .
+gst:GSTCompensationToStatesAct2017 a owl:NamedIndividual, gst:Act ;
+    rdfs:label "Goods and Services Tax (Compensation to States) Act, 2017"@en .
+gst:GSTCompensationCessRules a owl:NamedIndividual, gst:Rules ; gst:belongsToInstrument gst:GSTCompensationToStatesAct2017 ;
+    rdfs:label "GST Compensation Cess Rules"@en .
+gst:GSTATRules2023 a owl:NamedIndividual, gst:Rules ;
+    rdfs:label "GST Appellate Tribunal (Appointment and Conditions of Service of President and Members) Rules, 2023"@en .
+gst:GSTATProcedureRules2025 a owl:NamedIndividual, gst:Rules ;
+    rdfs:label "GST Appellate Tribunal (Procedure) Rules, 2025"@en .
+
+#################################################################
+#  INDIVIDUALS: KEY RULES (CGST Rules, 2017)
+#################################################################
+
+gst:Rule48 a owl:NamedIndividual, gst:Rule ; gst:belongsToInstrument gst:CGSTRules2017 ;
+    rdfs:label "Rule 48 - Manner of Issuing Invoice (incl. e-invoicing mandate under sub-rule 4)"@en .
+gst:Rule46 a owl:NamedIndividual, gst:Rule ; gst:belongsToInstrument gst:CGSTRules2017 ;
+    rdfs:label "Rule 46 - Contents of Tax Invoice"@en .
+gst:Rule138 a owl:NamedIndividual, gst:Rule ; gst:belongsToInstrument gst:CGSTRules2017 ;
+    gst:hasThreshold gst:ThresholdEWayBill50K ;
+    rdfs:label "Rule 138 - Information to be Furnished Prior to Commencement of Movement of Goods (E-Way Bill)"@en .
+gst:Rule88B a owl:NamedIndividual, gst:Rule ; gst:belongsToInstrument gst:CGSTRules2017 ;
+    rdfs:label "Rule 88B - Manner of Calculating Interest on Delayed Payment of Tax"@en .
+gst:Rule21A a owl:NamedIndividual, gst:Rule ; gst:belongsToInstrument gst:CGSTRules2017 ;
+    rdfs:label "Rule 21A - Suspension of Registration"@en .
+gst:Rule86B a owl:NamedIndividual, gst:Rule ; gst:belongsToInstrument gst:CGSTRules2017 ;
+    rdfs:label "Rule 86B - Restriction on Use of Electronic Credit Ledger"@en .
+
+#################################################################
+#  INDIVIDUALS: KEY NOTIFICATIONS (extracted from source manual's
+#  section-wise notification tracker)
+#################################################################
+
+gst:Notification_01_2017_CT a owl:NamedIndividual, gst:Notification ;
+    gst:notificationNumber "01/2017-CT" ; gst:notificationDate "2017-06-19T00:00:00"^^xsd:dateTime ;
+    gst:issuedUnderSection gst:CGST_Section1 ;
+    rdfs:comment "Brought into force Sec 1,2,3,4,5,10,22,23,24,25,26,27,28,29,30,139,146,164 of the CGST Act w.e.f. 22.06.2017."@en ;
+    rdfs:label "Notification 01/2017-CT"@en .
+gst:Notification_09_2017_CT a owl:NamedIndividual, gst:Notification ;
+    gst:notificationNumber "09/2017-CT" ; gst:notificationDate "2017-06-28T00:00:00"^^xsd:dateTime ;
+    rdfs:comment "Brought into force the bulk of the remaining CGST Act sections w.e.f. 01.07.2017."@en ;
+    rdfs:label "Notification 09/2017-CT"@en .
+gst:Notification_02_2019_CT a owl:NamedIndividual, gst:Notification ;
+    gst:notificationNumber "02/2019-CT" ; gst:notificationDate "2019-01-29T00:00:00"^^xsd:dateTime ;
+    gst:issuedUnderSection gst:CGST_Section7 ;
+    rdfs:comment "Brought into force amendments to Sec 7 (scope of supply) made by the CGST (Amendment) Act, 2018, w.e.f. 01.02.2019."@en ;
+    rdfs:label "Notification 02/2019-CT"@en .
+gst:Notification_10_2019_CT a owl:NamedIndividual, gst:Notification ;
+    gst:notificationNumber "10/2019-CT" ;
+    gst:issuedUnderSection gst:CGST_Section22 ;
+    rdfs:comment "Notified enhancement of the Sec 22 registration threshold to Rs 40 lakh for suppliers engaged exclusively in the supply of goods (subject to State-wise adoption and conditions)."@en ;
+    rdfs:label "Notification 10/2019-CT"@en .
+gst:Notification_33_2017_CT a owl:NamedIndividual, gst:Notification ;
+    gst:notificationNumber "33/2017-CT" ; gst:notificationDate "2017-09-15T00:00:00"^^xsd:dateTime ;
+    gst:issuedUnderSection gst:CGST_Section51 ;
+    rdfs:label "Notification 33/2017-CT (notifying Sec 51 for TDS)"@en .
+gst:Notification_50_2018_CT a owl:NamedIndividual, gst:Notification ;
+    gst:notificationNumber "50/2018-CT" ; gst:notificationDate "2018-09-13T00:00:00"^^xsd:dateTime ;
+    gst:issuedUnderSection gst:CGST_Section51 ;
+    rdfs:comment "Brought Sec 51 (TDS) into force w.e.f. 01.10.2018."@en ;
+    rdfs:label "Notification 50/2018-CT"@en .
+gst:Notification_51_2018_CT a owl:NamedIndividual, gst:Notification ;
+    gst:notificationNumber "51/2018-CT" ; gst:notificationDate "2018-09-13T00:00:00"^^xsd:dateTime ;
+    gst:issuedUnderSection gst:CGST_Section52 ;
+    rdfs:comment "Brought Sec 52 (TCS) into force w.e.f. 01.10.2018."@en ;
+    rdfs:label "Notification 51/2018-CT"@en .
+gst:Notification_70_2019_CT a owl:NamedIndividual, gst:Notification ;
+    gst:notificationNumber "70/2019-CT" ;
+    rdfs:comment "Notifies the class of registered persons required to issue e-invoices."@en ;
+    rdfs:label "Notification 70/2019-CT"@en .
+gst:Notification_10_2023_CT a owl:NamedIndividual, gst:Notification ;
+    gst:notificationNumber "10/2023-CT" ; gst:notificationDate "2023-05-10T00:00:00"^^xsd:dateTime ;
+    gst:hasThreshold gst:ThresholdEInvoicing5Cr ;
+    rdfs:comment "Reduced the e-invoicing aggregate-turnover threshold to Rs 5 crore, effective 01.08.2023."@en ;
+    rdfs:label "Notification 10/2023-CT"@en .
+gst:Notification_14_2017_CTR a owl:NamedIndividual, gst:Notification ;
+    gst:notificationNumber "14/2017-CT(R)" ; gst:notificationDate "2017-06-28T00:00:00"^^xsd:dateTime ;
+    gst:issuedUnderSection gst:CGST_Section7 ;
+    rdfs:comment "Notifies supplies to be treated as neither a supply of goods nor of services under Sec 7(2)(b)."@en ;
+    rdfs:label "Notification 14/2017-CT(R)"@en .
+gst:Notification_84_2020_CT a owl:NamedIndividual, gst:Notification ;
+    gst:notificationNumber "84/2020-CT" ;
+    rdfs:comment "Notifies the Quarterly Return Monthly Payment (QRMP) Scheme."@en ;
+    rdfs:label "Notification 84/2020-CT (QRMP Scheme)"@en .
+
+#################################################################
+#  INDIVIDUALS: STATES AND UNION TERRITORIES
+#################################################################
+
+#################################################################
+#  INDIVIDUALS: STATES
+#################################################################
+
+gst:AndhraPradesh a owl:NamedIndividual, gst:State ;
+    rdfs:label "Andhra Pradesh"@en ; gst:isSpecialCategory "false"^^xsd:boolean  .
+gst:ArunachalPradesh a owl:NamedIndividual, gst:State ;
+    rdfs:label "Arunachal Pradesh"@en ; gst:isSpecialCategory "false"^^xsd:boolean ; gst:sourceNote "Falls within Art 279A(4)(g) per general public record but was EXPRESSLY EXCLUDED from special-category treatment for Sec 22 threshold purposes by amendment (per source manual text)."  .
+gst:Assam a owl:NamedIndividual, gst:State ;
+    rdfs:label "Assam"@en ; gst:isSpecialCategory "false"^^xsd:boolean ; gst:sourceNote "Falls within Art 279A(4)(g) per general public record but was EXPRESSLY EXCLUDED from special-category treatment for Sec 22 threshold purposes by amendment (per source manual text)."  .
+gst:Bihar a owl:NamedIndividual, gst:State ;
+    rdfs:label "Bihar"@en ; gst:isSpecialCategory "false"^^xsd:boolean  .
+gst:Chhattisgarh a owl:NamedIndividual, gst:State ;
+    rdfs:label "Chhattisgarh"@en ; gst:isSpecialCategory "false"^^xsd:boolean  .
+gst:Goa a owl:NamedIndividual, gst:State ;
+    rdfs:label "Goa"@en ; gst:isSpecialCategory "false"^^xsd:boolean  .
+gst:Gujarat a owl:NamedIndividual, gst:State ;
+    rdfs:label "Gujarat"@en ; gst:isSpecialCategory "false"^^xsd:boolean  .
+gst:Haryana a owl:NamedIndividual, gst:State ;
+    rdfs:label "Haryana"@en ; gst:isSpecialCategory "false"^^xsd:boolean  .
+gst:HimachalPradesh a owl:NamedIndividual, gst:State ;
+    rdfs:label "Himachal Pradesh"@en ; gst:isSpecialCategory "false"^^xsd:boolean ; gst:sourceNote "Falls within Art 279A(4)(g) per general public record but was EXPRESSLY EXCLUDED from special-category treatment for Sec 22 threshold purposes by amendment (per source manual text)."  .
+gst:Jharkhand a owl:NamedIndividual, gst:State ;
+    rdfs:label "Jharkhand"@en ; gst:isSpecialCategory "false"^^xsd:boolean  .
+gst:Karnataka a owl:NamedIndividual, gst:State ;
+    rdfs:label "Karnataka"@en ; gst:isSpecialCategory "false"^^xsd:boolean  .
+gst:Kerala a owl:NamedIndividual, gst:State ;
+    rdfs:label "Kerala"@en ; gst:isSpecialCategory "false"^^xsd:boolean  .
+gst:MadhyaPradesh a owl:NamedIndividual, gst:State ;
+    rdfs:label "Madhya Pradesh"@en ; gst:isSpecialCategory "false"^^xsd:boolean  .
+gst:Maharashtra a owl:NamedIndividual, gst:State ;
+    rdfs:label "Maharashtra"@en ; gst:isSpecialCategory "false"^^xsd:boolean  .
+gst:Manipur a owl:NamedIndividual, gst:State, gst:SpecialCategoryState ;
+    rdfs:label "Manipur"@en ; gst:isSpecialCategory "true"^^xsd:boolean ; gst:sourceNote "Retains special-category status for Sec 22 threshold purposes after the amendments to the Sec 22 Explanation; derived from Sec 22 exclusion text + well-known Art 279A(4)(g) base list, not a value directly enumerated in the source manual."  .
+gst:Meghalaya a owl:NamedIndividual, gst:State ;
+    rdfs:label "Meghalaya"@en ; gst:isSpecialCategory "false"^^xsd:boolean ; gst:sourceNote "Falls within Art 279A(4)(g) per general public record but was EXPRESSLY EXCLUDED from special-category treatment for Sec 22 threshold purposes by amendment (per source manual text)."  .
+gst:Mizoram a owl:NamedIndividual, gst:State, gst:SpecialCategoryState ;
+    rdfs:label "Mizoram"@en ; gst:isSpecialCategory "true"^^xsd:boolean ; gst:sourceNote "Retains special-category status for Sec 22 threshold purposes after the amendments to the Sec 22 Explanation; derived from Sec 22 exclusion text + well-known Art 279A(4)(g) base list, not a value directly enumerated in the source manual."  .
+gst:Nagaland a owl:NamedIndividual, gst:State, gst:SpecialCategoryState ;
+    rdfs:label "Nagaland"@en ; gst:isSpecialCategory "true"^^xsd:boolean ; gst:sourceNote "Retains special-category status for Sec 22 threshold purposes after the amendments to the Sec 22 Explanation; derived from Sec 22 exclusion text + well-known Art 279A(4)(g) base list, not a value directly enumerated in the source manual."  .
+gst:Odisha a owl:NamedIndividual, gst:State ;
+    rdfs:label "Odisha"@en ; gst:isSpecialCategory "false"^^xsd:boolean  .
+gst:Punjab a owl:NamedIndividual, gst:State ;
+    rdfs:label "Punjab"@en ; gst:isSpecialCategory "false"^^xsd:boolean  .
+gst:Rajasthan a owl:NamedIndividual, gst:State ;
+    rdfs:label "Rajasthan"@en ; gst:isSpecialCategory "false"^^xsd:boolean  .
+gst:Sikkim a owl:NamedIndividual, gst:State ;
+    rdfs:label "Sikkim"@en ; gst:isSpecialCategory "false"^^xsd:boolean ; gst:sourceNote "Falls within Art 279A(4)(g) per general public record but was EXPRESSLY EXCLUDED from special-category treatment for Sec 22 threshold purposes by amendment (per source manual text)."  .
+gst:TamilNadu a owl:NamedIndividual, gst:State ;
+    rdfs:label "Tamil Nadu"@en ; gst:isSpecialCategory "false"^^xsd:boolean  .
+gst:Telangana a owl:NamedIndividual, gst:State ;
+    rdfs:label "Telangana"@en ; gst:isSpecialCategory "false"^^xsd:boolean  .
+gst:Tripura a owl:NamedIndividual, gst:State, gst:SpecialCategoryState ;
+    rdfs:label "Tripura"@en ; gst:isSpecialCategory "true"^^xsd:boolean ; gst:sourceNote "Retains special-category status for Sec 22 threshold purposes after the amendments to the Sec 22 Explanation; derived from Sec 22 exclusion text + well-known Art 279A(4)(g) base list, not a value directly enumerated in the source manual."  .
+gst:UttarPradesh a owl:NamedIndividual, gst:State ;
+    rdfs:label "Uttar Pradesh"@en ; gst:isSpecialCategory "false"^^xsd:boolean  .
+gst:Uttarakhand a owl:NamedIndividual, gst:State ;
+    rdfs:label "Uttarakhand"@en ; gst:isSpecialCategory "false"^^xsd:boolean ; gst:sourceNote "Falls within Art 279A(4)(g) per general public record but was EXPRESSLY EXCLUDED from special-category treatment for Sec 22 threshold purposes by amendment (per source manual text)."  .
+gst:WestBengal a owl:NamedIndividual, gst:State ;
+    rdfs:label "West Bengal"@en ; gst:isSpecialCategory "false"^^xsd:boolean  .
+
+#################################################################
+#  INDIVIDUALS: UNION TERRITORIES
+#################################################################
+
+gst:AndamanandNicobarIslands a owl:NamedIndividual, gst:UnionTerritory ; rdfs:label "Andaman and Nicobar Islands"@en .
+gst:Chandigarh a owl:NamedIndividual, gst:UnionTerritory ; rdfs:label "Chandigarh"@en .
+gst:DadraandNagarHaveliandDamanandDiu a owl:NamedIndividual, gst:UnionTerritory ; rdfs:label "Dadra and Nagar Haveli and Daman and Diu"@en .
+gst:DelhiNationalCapitalTerritory a owl:NamedIndividual, gst:UnionTerritory, gst:State ;
+    gst:isSpecialCategory "false"^^xsd:boolean ;
+    gst:sourceNote "Also typed gst:State per Sec 2(103), CGST Act 2017 ('State includes a Union territory with Legislature') - Delhi (NCT) has a Legislative Assembly." ;
+    rdfs:label "Delhi (National Capital Territory)"@en .
+gst:JammuandKashmir a owl:NamedIndividual, gst:UnionTerritory, gst:State ;
+    gst:isSpecialCategory "false"^^xsd:boolean ;
+    gst:sourceNote "Also typed gst:State per Sec 2(103), CGST Act 2017 - J&K has held Union Territory status with a Legislature since the Jammu and Kashmir Reorganisation Act, 2019. Note: J&K was EXCLUDED from special-category treatment for Sec 22 threshold purposes by the same amendment referenced on gst:SpecialCategoryState." ;
+    rdfs:label "Jammu and Kashmir"@en .
+gst:Ladakh a owl:NamedIndividual, gst:UnionTerritory ; rdfs:label "Ladakh"@en .
+gst:Lakshadweep a owl:NamedIndividual, gst:UnionTerritory ; rdfs:label "Lakshadweep"@en .
+gst:Puducherry a owl:NamedIndividual, gst:UnionTerritory, gst:State ;
+    gst:isSpecialCategory "false"^^xsd:boolean ;
+    gst:sourceNote "Also typed gst:State per Sec 2(103), CGST Act 2017 - Puducherry has a Legislative Assembly." ;
+    rdfs:label "Puducherry"@en .
+
+[ a owl:AllDifferent ; owl:distinctMembers ( gst:AndhraPradesh gst:ArunachalPradesh gst:Assam gst:Bihar gst:Chhattisgarh gst:Goa gst:Gujarat gst:Haryana gst:HimachalPradesh gst:Jharkhand gst:Karnataka gst:Kerala gst:MadhyaPradesh gst:Maharashtra gst:Manipur gst:Meghalaya gst:Mizoram gst:Nagaland gst:Odisha gst:Punjab gst:Rajasthan gst:Sikkim gst:TamilNadu gst:Telangana gst:Tripura gst:UttarPradesh gst:Uttarakhand gst:WestBengal ) ] .
+
+#################################################################
+#  INDIVIDUALS: COMPOSITION SCHEMES / CIRCULARS / MISC
+#################################################################
+
+gst:CompositionSchemeGoods a owl:NamedIndividual, gst:CompositionLevyGoods ;
+    gst:hasThreshold gst:ThresholdCompositionGoods1_5Cr, gst:ThresholdCompositionGoodsSpecialCategory75L ;
+    gst:hasApplicableSection gst:CGST_Section10 ;
+    rdfs:label "Composition Scheme for Goods/Restaurant Services (Sec 10(1))"@en .
+gst:CompositionSchemeServices a owl:NamedIndividual, gst:CompositionLevyServices ;
+    gst:hasThreshold gst:ThresholdCompositionServices50L ;
+    gst:hasApplicableSection gst:CGST_Section10 ;
+    rdfs:label "Composition Scheme for Services (Sec 10(2A))"@en .
+
+gst:Circular_198_2023_GST a owl:NamedIndividual, gst:Circular ;
+    gst:circularNumber "198/10/2023-GST" ;
+    rdfs:comment "Clarification on an issue pertaining to e-invoice."@en ;
+    rdfs:label "Circular 198/10/2023-GST"@en .
+
+#################################################################
+#  INDIVIDUALS: A FEW REPRESENTATIVE BUSINESS-TYPE / OFFENCE / SUPPLY EXAMPLES
+#  (Illustrative NamedIndividuals of the classes above, useful as seed data
+#   for Z3 constraint testing / OWLAPI unit tests.)
+#################################################################
+
+gst:ExampleManufacturerBusiness a owl:NamedIndividual, gst:Manufacturer ;
+    rdfs:comment "Illustrative individual for testing: a manufacturing business type instance."@en .
+gst:ExampleServiceProviderBusiness a owl:NamedIndividual, gst:ServiceProvider ;
+    rdfs:comment "Illustrative individual for testing: a service-provider business type instance."@en .
+gst:ExampleCompositionEligibleBusiness a owl:NamedIndividual, gst:CompositionTaxpayer ;
+    gst:turnoverAmount "8000000"^^xsd:decimal ;
+    gst:isEligibleForComposition gst:CompositionSchemeGoods ;
+    rdfs:comment "Illustrative individual: a registered person with Rs 80 lakh turnover, eligible for the goods composition scheme (below the Rs 1.5 crore Sec 10(1) threshold)."@en .

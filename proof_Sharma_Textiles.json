@@ -1,0 +1,32 @@
+{
+  "business_name": "Sharma Textiles",
+  "financial_year": "2025-26",
+  "generated_at": "2026-09-09T08:27:53.167175",
+  "ontology_version": "1.0.0",
+  "summary": {
+    "SATISFIED": 0,
+    "VIOLATED": 1,
+    "NOT_APPLICABLE": 0,
+    "INDETERMINATE": 0
+  },
+  "evaluations": [
+    {
+      "rule_id": "Sec22_RegistrationLiability",
+      "module": "Registration",
+      "status": "VIOLATED",
+      "legal_citation": "Sec 22(1) first proviso omitted / main provision, CGST Act 2017",
+      "section_number": "22",
+      "description": "Registration liability check under Sec 22 against Registration Threshold - General (Rs 20 Lakh).",
+      "inputs_used": {
+        "aggregate_turnover": 2500000.0,
+        "state": "Maharashtra",
+        "registration_status": "NotRegistered"
+      },
+      "computed_value": 2500000.0,
+      "threshold_value": 2000000.0,
+      "threshold_id": "ThresholdRegistrationGeneral20L",
+      "explanation_hint": "Sharma Textiles's aggregate turnover of Rs 2,500,000 exceeds the Rs 2,000,000 threshold under Sec 22(1) first proviso omitted / main provision, CGST Act 2017, so registration is mandatory.",
+      "evaluated_at": "2026-09-09T08:27:53.167234"
+    }
+  ]
+}

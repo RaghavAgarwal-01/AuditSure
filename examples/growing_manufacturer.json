@@ -1,0 +1,52 @@
+{
+  "name": "Deccan Precision Manufacturing",
+  "state": "Karnataka",
+  "aggregate_turnover": "30000000",
+  "financial_year": "2025-26",
+  "turnover_by_year": { "2023-24": "60000000" },
+  "business_types": ["Manufacturer"],
+  "registration_status": "ActiveStatus",
+  "outward_supplies": [
+    {
+      "invoice_number": "OUT-1",
+      "invoice_date": "2025-06-01",
+      "value": "500000",
+      "supply_type": "ZeroRatedSupply",
+      "is_export_or_sez_supply": true,
+      "consignment_value": "500000"
+    }
+  ],
+  "inward_invoices": [
+    {
+      "invoice_number": "IN-1",
+      "invoice_date": "2025-06-01",
+      "taxable_value": "200000",
+      "tax_amount": "36000",
+      "has_tax_invoice_or_debit_note": true,
+      "invoice_details_communicated_37_38": true,
+      "goods_or_services_received": true,
+      "tax_paid_by_supplier_to_government": true,
+      "supplier_has_filed_return": true,
+      "payment_made_to_supplier": true,
+      "payment_date": "2025-07-01"
+    },
+    {
+      "invoice_number": "IN-2",
+      "invoice_date": "2025-06-01",
+      "taxable_value": "50000",
+      "tax_amount": "9000",
+      "is_blocked_credit_category": true,
+      "blocked_credit_reason": "Motor vehicle (seating <=13) - Sec 17(5)(a)",
+      "itc_claimed": true
+    }
+  ],
+  "refund_claims": [
+    {
+      "claim_id": "RF-1",
+      "claim_type": "ZeroRatedITC",
+      "claim_amount": "500000",
+      "relevant_date": "2025-06-01",
+      "filing_date": "2025-08-01"
+    }
+  ]
+}
