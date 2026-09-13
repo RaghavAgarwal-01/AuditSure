@@ -1,6 +1,6 @@
 rdflib>=7.0.0
 owlready2>=0.46
 z3-solver>=4.13.0
-anthropic>=0.40.0
+groq>=0.37.0
 rich>=13.0.0
 pytest>=8.0.0

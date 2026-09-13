@@ -105,6 +105,9 @@ def build_user_prompt(proof: ProofObject) -> str:
 
 
 def build_messages(proof: ProofObject) -> list[dict]:
-    """Anthropic Messages API shape: system is passed separately by the
-    caller; this returns just the `messages` list."""
+    """Builds the user message for the Layer 3 chat-completion call.
+
+    The system prompt is supplied separately by Layer3Explainer so the
+    prompt-construction layer remains deterministic and provider-neutral.
+    """
     return [{"role": "user", "content": build_user_prompt(proof)}]

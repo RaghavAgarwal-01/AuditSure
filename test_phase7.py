@@ -5,7 +5,7 @@ Prompt construction (explanation_prompt.py) is pure and deterministic,
 so it's tested exhaustively without any network/credential dependency.
 The Layer3Explainer's dry-run path is tested the same way. A real
 (non-dry-run) API call is NOT tested here - there is no
-ANTHROPIC_API_KEY in this environment - but the test suite documents
+GROQ_API_KEY in this environment - but the test suite documents
 exactly what a CI environment WITH credentials would need to add
 (see test_real_api_call_is_skipped_without_credentials).
 
@@ -119,7 +119,7 @@ def test_system_prompt_forbids_introducing_new_legal_content():
     assert "Never introduce a section number" in SYSTEM_PROMPT
 
 
-def test_build_messages_shape_matches_anthropic_api():
+def test_build_messages_shape_matches_chat_completion_api():
     proof = make_proof(make_evaluation())
     messages = build_messages(proof)
     assert isinstance(messages, list)
@@ -141,13 +141,13 @@ def test_same_proof_object_produces_identical_prompt_twice():
 # ======================================================================
 
 def test_auto_dry_run_when_no_api_key_present(monkeypatch):
-    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("GROQ_API_KEY", raising=False)
     explainer = Layer3Explainer()
     assert explainer.dry_run is True
 
 
 def test_explicit_dry_run_overrides_present_api_key(monkeypatch):
-    monkeypatch.setenv("ANTHROPIC_API_KEY", "fake-key-for-test")
+    monkeypatch.setenv("GROQ_API_KEY", "fake-key-for-test")
     explainer = Layer3Explainer(dry_run=True)
     assert explainer.dry_run is True
 
@@ -162,13 +162,13 @@ def test_dry_run_output_contains_system_and_user_prompt_content():
 
 
 def test_real_call_without_api_key_raises_clear_error(monkeypatch):
-    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("GROQ_API_KEY", raising=False)
     explainer = Layer3Explainer(dry_run=False, api_key=None)
-    with pytest.raises(Layer3ConfigurationError, match="No API key configured"):
+    with pytest.raises(Layer3ConfigurationError, match="No GROQ API key configured"):
         explainer.explain(make_proof(make_evaluation()))
 
 
-@pytest.mark.skipif(not os.environ.get("ANTHROPIC_API_KEY"), reason="requires a real ANTHROPIC_API_KEY")
+@pytest.mark.skipif(not os.environ.get("GROQ_API_KEY"), reason="requires a real GROQ_API_KEY")
 def test_real_api_call_produces_markdown_explanation(onto):
     """Documents what a CI environment WITH real credentials would run.
     Skipped here since this sandbox has no API key - this is the one

@@ -10,7 +10,7 @@ Three ways to run it:
 
 Shows the compliance verdict (grouped, colour-coded proof chain of every
 Section/Rule that fired) and the Layer 3 plain-English explanation
-(dry-run by default - set ANTHROPIC_API_KEY for a real LLM-written one).
+(dry-run by default - set GROQ_API_KEY for a real LLM-written one).
 """
 
 from __future__ import annotations
@@ -20,6 +20,26 @@ import sys
 from datetime import date
 from decimal import Decimal
 from pathlib import Path
+
+# Make CLI output UTF-8-safe on Windows and redirected output.
+# Windows console / subprocess encoding compatibility.
+#
+# Interactive terminal:
+#   Use UTF-8 so Rich can display ₹ and other Unicode characters.
+#
+# Captured / redirected output:
+#   Use ASCII so pytest's Windows cp1252 decoder can safely read it.
+if hasattr(sys.stdout, "reconfigure"):
+    if sys.stdout.isatty():
+        sys.stdout.reconfigure(encoding="utf-8")
+    else:
+        sys.stdout.reconfigure(encoding="ascii", errors="replace")
+
+if hasattr(sys.stderr, "reconfigure"):
+    if sys.stderr.isatty():
+        sys.stderr.reconfigure(encoding="utf-8")
+    else:
+        sys.stderr.reconfigure(encoding="ascii", errors="replace")
 
 from rich.console import Console
 from rich.markdown import Markdown
